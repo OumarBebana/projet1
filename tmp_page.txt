@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html dir="ltr" lang="fr" prefix="content: http://purl.org/rss/1.0/modules/content/  dc: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  og: http://ogp.me/ns#  rdfs: http://www.w3.org/2000/01/rdf-schema#  schema: http://schema.org/  sioc: http://rdfs.org/sioc/ns#  sioct: http://rdfs.org/sioc/types#  skos: http://www.w3.org/2004/02/skos/core#  xsd: http://www.w3.org/2001/XMLSchema# ">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+<meta content="yahyabenmed@gmail.com" name="author"/>
+<meta charset="utf-8"/>
+<meta content="Drupal 9 (https://www.drupal.org)" name="Generator"/>
+<meta content="width" name="MobileOptimized"/>
+<meta content="true" name="HandheldFriendly"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="/themes/custom/dgtic/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<link href="https://primature.gov.mr/fr/node/1334" hreflang="fr" rel="alternate"/>
+<link href="https://primature.gov.mr/ar/node/1334" hreflang="ar" rel="alternate"/>
+<link href="https://primature.gov.mr/fr/node/1334" rel="canonical"/>
+<link href="https://primature.gov.mr/fr/node/1334" rel="shortlink"/>
+<link href="https://primature.gov.mr/fr/node/1334" rel="revision"/>
+<title>Le Président de la République se rend au Trarza pour le lancement d’importants projets de développement | Primature</title>
+<link href="/sites/default/files/css/css_DfIk0kDE_97QqZBJr5TF4iiP6Rt7nG3gWSu-Jh5AKCY.css" media="all" rel="stylesheet"/>
+<link href="/sites/default/files/css/css_GoGIWypuBbhIGL6lD5p2_YDQ39AGMGcjMucHevhhZs0.css" media="all" rel="stylesheet"/>
+</head>
+<body class="path-node page-node-type-article">
+<div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas="">
+<header class="container" id="header">
+<div class="banner-top">
+<div class="banner-img">
+<div class="region region-banner">
+<div class="block block-block-content block-block-content81eaa0d0-0923-40d1-a34b-6ae315f0afac" id="block-entetefr-2">
+<div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><p><img alt="bannière fr" data-entity-type="file" data-entity-uuid="227fd0b6-cd35-4821-b29e-b255cc1e58fd" src="/sites/default/files/inline-images/logo-fr.png"/></p>
+</div>
+</div>
+</div>
+</div>
+<div class="lang-selecter">
+<div class="region region-lang-swicher">
+<div class="block block-block-content block-block-contentbaf48d2b-5982-422a-b8dc-d2478894b896" id="block-menulangues">
+<div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><div class="language-switcher-language-url block block-language block-language-blocklanguage-interface" id="block-selecteurdelangue" role="navigation">
+<ul class="links">
+<li class="fr is-active" data-drupal-link-system-path="https://primature.gov.mr/index.php/fr" hreflang="fr"><a class="language-link" data-drupal-link-system-path="node" href="https://primature.gov.mr/index.php/fr" hreflang="fr">Français</a></li>
+<li class="ar" data-drupal-link-system-path="https://primature.gov.mr/index.php/ar" hreflang="ar"><a class="language-link" data-drupal-link-system-path="node" href="https://primature.gov.mr/index.php/ar" hreflang="ar">العربية</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<ul class="social-icones">
+<li> <a href="https://www.facebook.com/PrimatureRIM" target="_blank"> <img alt="" class="img-fluid header-img" src="themes/custom/dgtic/src/img/fb.png"/></a></li>
+<li><a href="https://twitter.com/PrimatureRIM" target="_blank"> <img alt="" class="img-fluid header-img" src="themes/custom/dgtic/src/img/twitter.png"/></a></li>
+<!--li> <a href="#" target="_blank"> <img class="img-fluid header-img" src="themes/custom/dgtic/src/img/fb.png" alt=""></a></li>
+        <li><a href="#" target="_blank"> <img class="img-fluid header-img" src="themes/custom/dgtic/src/img/twitter.png" alt=""></a></li-->
+<!--li> <img class="img-fluid header-img" src="themes/custom/dgtic/src/img/youtube.png" alt=""></li-->
+<!--li> <a target="_blank" href="http://primature.gov.mr/rss.xml"> <img class="img-fluid header-img" src="themes/custom/dgtic/src/img/rss.png" alt=""></a></li -->
+</ul>
+</div>
+<nav class="navbar navbar-expand-md navbar-light">
+<a class="navbar-brand" href="#">
+<!--img class="img-fluid header-img" src="/primature/themes/custom/dgtic/src/img/banner-sm.png" alt=""  -->
+</a>
+<button class="navbar-toggler ml-auto" data-target="#responsive" data-toggle="collapse" type="button">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="responsive">
+<ul class="navbar-nav">
+<li class="nav-item">
+<a class="nav-link no-below" href="/fr"><span>Accueil</span></a>
+</li>
+<li class="nav-item dropdown">
+<a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdown" role="button">
+              Gouvernement
+            </a>
+<div aria-labelledby="navbarDropdown" class="dropdown-menu">
+<a class="dropdown-item" href="/fr/node/135"><span>Premier Ministre</span></a>
+<a class="dropdown-item" href="/fr/anciens-pm"><span>Anciens Premiers Ministres</span></a>
+<a class="dropdown-item" href="/fr/politique-gov"><span>Politique du gouvernement</span></a>
+<a class="dropdown-item" href="/fr/conseils-des-ministres"><span>Conseil des ministres</span></a>
+</div>
+</li>
+<li class="nav-item dropdown">
+<a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdown" role="button">
+              Activité du Premier Ministre
+            </a>
+<div aria-labelledby="navbarDropdown" class="dropdown-menu">
+<a class="dropdown-item" href="/fr/taxonomy/term/1"><span>Réunions</span></a>
+<a class="dropdown-item" href="/fr/taxonomy/term/3"><span>Visites</span></a>
+<a class="dropdown-item" href="/fr/taxonomy/term/2"><span>Audiences</span></a>
+</div>
+</li>
+<li class="nav-item dropdown">
+<a aria-expanded="false" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdown" role="button">
+              Textes
+            </a>
+<div aria-labelledby="navbarDropdown" class="dropdown-menu">
+<a class="dropdown-item" href="/fr/t_lois"><span>Lois</span></a>
+<a class="dropdown-item" href="/fr/t-decrets"><span>Décrets</span></a>
+<a class="dropdown-item" href="/fr/t_arretes"><span>Arrêtés</span></a>
+<a class="dropdown-item" href="/fr/tcirculaires"><span>Circulaires</span></a>
+</div>
+</li>
+<li class="nav-item">
+<a class="nav-link no-below" href="https://www.primature.gov.mr/ar/node/469"><span>L'emblème national</span></a>
+</li>
+<li class="nav-item">
+<a class="nav-link no-below" href="/fr/nous-contacter"><span>Contact</span></a>
+</li>
+<li class="nav-item">
+<a class="nav-link no-below" href="/fr/lien-utiles"><span>Liens</span></a>
+</li>
+</ul>
+</div>
+</nav>
+</header>
+<div class="container mt-3 mb-3 padding">
+<div class="main-content">
+<div class="region region-highlighted">
+<div class="hidden" data-drupal-messages-fallback=""></div>
+</div>
+<div class="row paddind">
+<div class="col-md-8">
+<div class="region region-content">
+<div class="block block-core block-page-title-block" id="block-dgtic-page-title">
+<h1 class="page-title"><span class="field field--name-title field--type-string field--label-hidden" property="schema:name">Le Président de la République se rend au Trarza pour le lancement d’importants projets de développement</span>
+</h1>
+</div>
+<article class="post">
+<div class="post-body">
+<img alt="" class="mb-3 img-fluid post-img" src="/sites/default/files/2024-11/741235.jpg"/>
+<div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item" property="schema:text"><p>Le Président de la République, Son Excellence Monsieur Mohamed Ould Cheikh El Ghazouani, a quitté Nouakchott lundi matin pour se rendre au Trarza, dans le c

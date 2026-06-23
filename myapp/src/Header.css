@@ -1,0 +1,402 @@
+
+.bw-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: background var(--transition-slow), box-shadow var(--transition-slow);
+}
+
+[data-theme="dark"] .bw-header {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Top strip (Mauritanian flag colors) ───────────────────── */
+.bw-header-strip {
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--green) 0%,
+    var(--green) 40%,
+    var(--gold)  40%,
+    var(--gold)  60%,
+    var(--green) 60%,
+    var(--green) 100%
+  );
+}
+
+/* ─── Top bar layout ────────────────────────────────────────── */
+.bw-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+}
+
+.bw-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Logo ──────────────────────────────────────────────────── */
+.bw-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.bw-header-emblem {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.bw-header-title h1 {
+  font-size: 18.5px;
+  font-weight: 800;
+  color: var(--green);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+}
+
+.bw-header-title span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: block;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* ─── Breaking news ticker bar ───────────────────────────────── */
+.breaking-wrapper {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme="dark"] .breaking-wrapper {
+  background: #11141d;
+  border-top-color: var(--border-light);
+  border-bottom-color: var(--border);
+}
+
+.breaking-label {
+  background: var(--green);
+  color: white;
+  height: 100%;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 10;
+}
+
+.breaking-content {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.breaking-track {
+  display: inline-flex;
+  align-items: center;
+  animation: moveNews 90s linear infinite;
+  white-space: nowrap;
+}
+.breaking-wrapper:hover .breaking-track {
+  animation-play-state: paused;
+}
+
+.breaking-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s;
+  text-decoration: none;
+  padding: 0;
+}
+.breaking-item:hover {
+  color: var(--green);
+}
+
+.breaking-item::before {
+  content: '•';
+  font-size: 16px;
+  color: var(--text-faint);
+  margin: 0 16px 0 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.breaking-source {
+  background: var(--green);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.breaking-item:hover .breaking-source {
+  background: var(--green-dark);
+}
+
+.breaking-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  animation: pulse-badge 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.breaking-item--urgent {
+  font-weight: 800;
+}
+
+[data-theme="dark"] .breaking-item {
+  color: #e5e7eb;
+}
+[data-theme="dark"] .breaking-item:hover {
+  color: var(--green-light);
+}
+[data-theme="dark"] .breaking-item::before {
+  color: var(--text-muted);
+}
+[data-theme="dark"] .breaking-source {
+  background: var(--green-dark);
+  color: #e5e7eb;
+}
+[data-theme="dark"] .breaking-badge {
+  background: #8b1a2b;
+}
+
+[dir="rtl"] .breaking-item {
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .breaking-item::before {
+  margin: 0 6px 0 16px;
+}
+
+@keyframes moveNews {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── Urgent vs Latest mode ─────────────────────────────── */
+.breaking-wrapper--urgent {
+  background: #fff5f5;
+  border-top-color: #fecaca;
+  border-bottom-color: #fca5a5;
+}
+
+[data-theme="dark"] .breaking-wrapper--urgent {
+  background: #1c0a0a;
+  border-top-color: #7f1d1d;
+  border-bottom-color: #991b1b;
+}
+
+.breaking-label--urgent {
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+}
+
+.breaking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  margin-inline-end: 6px;
+  animation: blink-dot 1s ease-in-out infinite;
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ─── Control Pill Buttons ───────────────────────────────────── */
+.bw-lang-btn,
+.bw-theme-btn,
+.bw-services-btn {
+  background: var(--border-light);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  line-height: 1;
+}
+
+.bw-lang-btn:hover,
+.bw-theme-btn:hover {
+  background: var(--green-light);
+  color: var(--green);
+  border-color: rgba(13, 107, 60, 0.25);
+}
+
+/* Services button — slightly highlighted to stand out */
+.bw-services-btn {
+  background: var(--green-light);
+  color: var(--green-dark);
+  border-color: rgba(13, 107, 60, 0.22);
+  font-weight: 700;
+}
+
+.bw-services-btn:hover {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+[data-theme="dark"] .bw-lang-btn,
+[data-theme="dark"] .bw-theme-btn,
+[data-theme="dark"] .bw-services-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+[data-theme="dark"] .bw-services-btn {
+  background: rgba(13, 107, 60, 0.18);
+  color: var(--green-light);
+  border-color: rgba(13, 107, 60, 0.35);
+}
+
+[data-theme="dark"] .bw-services-btn:hover {
+  background: var(--green);
+  color: #fff;
+}
+
+[data-theme="dark"] .bw-lang-btn:hover,
+[data-theme="dark"] .bw-theme-btn:hover {
+  background: var(--green-light);
+  color: var(--text-h);
+  border-color: var(--green);
+}
+
+.bw-theme-btn {
+  gap: 6px;
+}
+.bw-theme-icon {
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+}
+.bw-theme-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ─── Live Indicator Badge ───────────────────────────────────── */
+.bw-live-badge {
+  background: var(--green-light);
+  color: var(--green);
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  border: 1px solid rgba(13, 107, 60, 0.15);
+}
+
+.bw-live-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+.bw-map-btn {
+  background: var(--border-light);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  width: 36px;
+  height: 32px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.bw-map-btn:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+[data-theme="dark"] .bw-map-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+[data-theme="dark"] .bw-map-btn:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+

@@ -1,0 +1,19 @@
+
+
+<!-- THEME DEBUG -->
+<!-- THEME HOOK: 'views_view_rss' -->
+<!-- BEGIN OUTPUT from 'core/modules/views/templates/views-view-rss.html.twig' -->
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xml:base="http://energies-petrole.gov.mr/ar" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>وزارة الطاقة والنفط </title>
+    <link>http://energies-petrole.gov.mr/ar</link>
+    <description></description>
+    <language>ar</language>
+    
+    
+  </channel>
+</rss>
+
+<!-- END OUTPUT from 'core/modules/views/templates/views-view-rss.html.twig' -->
+
