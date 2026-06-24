@@ -30,7 +30,7 @@ class MapErrorBoundary extends Component<{children:ReactNode;onReset:()=>void},{
   }
 }
 
-const API_BASE = "/api";
+import { API_BASE } from "./config";
 
 export type Source = {
   id: number;

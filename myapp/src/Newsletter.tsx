@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Lang } from "./i18n";
+import { API_BASE } from "./config";
 
 /* ── Translations ── */
 const NL = {
@@ -173,7 +174,7 @@ export default function Newsletter({ lang = "ar" }: { lang?: Lang }) {
       setSubscribed(false); setSubData(null); return;
     }
     try {
-      const res = await fetch(`/api/newsletter/check/?email=${encodeURIComponent(v)}`);
+      const res = await fetch(`${API_BASE}/newsletter/check/?email=${encodeURIComponent(v)}`);
       const d = await res.json();
       if (d.subscribed) { setSubscribed(true); setSubData(d); }
       else { setSubscribed(false); setSubData(null); }
@@ -194,7 +195,7 @@ export default function Newsletter({ lang = "ar" }: { lang?: Lang }) {
     if (!interests.length) { setMsg(tx.errSelect); return; }
     setLoading(true); setMsg("");
     try {
-      const res = await fetch("/api/newsletter/subscribe/", {
+      const res = await fetch(`${API_BASE}/newsletter/subscribe/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), interests }),
@@ -213,7 +214,7 @@ export default function Newsletter({ lang = "ar" }: { lang?: Lang }) {
     if (!interests.length) { setMsg(tx.errSelect); return; }
     setLoading(true); setMsg("");
     try {
-      const res = await fetch("/api/newsletter/manage/", {
+      const res = await fetch(`${API_BASE}/newsletter/manage/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), interests }),
@@ -230,7 +231,7 @@ export default function Newsletter({ lang = "ar" }: { lang?: Lang }) {
   const doUnsubscribe = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/newsletter/unsubscribe/", {
+      const res = await fetch(`${API_BASE}/newsletter/unsubscribe/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),

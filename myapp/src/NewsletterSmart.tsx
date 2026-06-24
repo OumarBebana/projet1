@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { Lang } from "./i18n";
+import { API_BASE } from "./config";
 
 /* ─── Types ────────────────────────────────────────────────── */
 type InterestItem = { key: string; labelAr: string; labelFr: string; icon: string; color: string };
@@ -169,7 +170,7 @@ export default function NewsletterSmart({ lang = "ar" }: Props) {
     if (interests.length === 0)  { setSubMsg(isAr?"اختر مجالاً واحداً":"Choisissez un domaine"); setSubMsgType("error"); return; }
     setSubLoading(true);
     try {
-      const res = await fetch("/api/newsletter/subscribe/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email:subEmail.trim().toLowerCase(), interests, language:lang, frequency }) });
+      const res = await fetch(`${API_BASE}/newsletter/subscribe/`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email:subEmail.trim().toLowerCase(), interests, language:lang, frequency }) });
       if (res.ok) { setSubDone(true); setSubEmail(""); }
       else { const d = await res.json(); setSubMsg(d.error||d.message||"خطأ"); setSubMsgType("error"); }
     } catch { setSubMsg("Network error"); setSubMsgType("error"); }
@@ -179,7 +180,7 @@ export default function NewsletterSmart({ lang = "ar" }: Props) {
   const confirmUnsubscribe = async () => {
     setUnsubLoading(true); setUnsubConfirm(false);
     try {
-      const res = await fetch("/api/newsletter/unsubscribe/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email:unsubEmail.trim().toLowerCase() }) });
+      const res = await fetch(`${API_BASE}/newsletter/unsubscribe/`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email:unsubEmail.trim().toLowerCase() }) });
       if (res.ok) { setUnsubDone(true); setUnsubEmail(""); }
       else { const d = await res.json(); setUnsubMsg(d.error||"خطأ"); setUnsubMsgType("error"); }
     } catch { setUnsubMsg("Network error"); setUnsubMsgType("error"); }

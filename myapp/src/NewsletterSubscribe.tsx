@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { API_BASE } from "./config";
 import {
   CalendarDays, CalendarRange, CheckCircle2, UserMinus,
   ArrowLeft, ArrowRight, PartyPopper,
@@ -178,7 +179,7 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
     if (!val.includes("@") || !val.includes(".")) return;
     checkTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/newsletter/check/?email=${encodeURIComponent(val.trim().toLowerCase())}`);
+        const res = await fetch(`${API_BASE}/newsletter/check/?email=${encodeURIComponent(val.trim().toLowerCase())}`);
         const d   = await res.json();
         if (d.subscribed) setStep("already");
       } catch { /* ignore */ }
@@ -197,7 +198,7 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
     if (!topics.length) { setError(t.errSelectTopic); return; }
     setLoading(true); setError("");
     try {
-      await fetch("/api/newsletter/subscribe/", {
+      await fetch(`${API_BASE}/newsletter/subscribe/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), interests: topics, frequency, lang }),
@@ -212,7 +213,7 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
   const handleUnsubscribe = async () => {
     setLoading(true); setError("");
     try {
-      await fetch("/api/newsletter/manage/", {
+      await fetch(`${API_BASE}/newsletter/manage/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), action: "unsubscribe" }),
