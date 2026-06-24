@@ -7,9 +7,9 @@ import {
   PersonStanding, Phone, Globe, Clock, Ruler, Timer, Settings,
   Crosshair, Loader2, PartyPopper, Bot, X, ChevronDown,
   ExternalLink, Crown, Landmark, Building2, Building,
-  GraduationCap, HeartPulse, Home, ShieldCheck, Scale,
+  GraduationCap, Home, ShieldCheck, Scale,
   Plus, Satellite, Square, ChevronLeft, ChevronRight,
-  CornerDownLeft, Check, AlertTriangle, CheckCircle2,
+  CornerDownLeft, Check,
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */

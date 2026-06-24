@@ -4,8 +4,7 @@ import {
   Building2, ShieldCheck, Pill, Flame, Radio,
   Mail, Zap, Landmark, Globe, BellOff,
   FileText, CalendarDays, CreditCard, ClipboardList,
-  MapPin, Navigation, X, ChevronRight, ChevronLeft,
-  Clock, ArrowRight, ArrowLeft,
+  X, ArrowRight, ArrowLeft,
 } from "lucide-react";
 
 interface Props {
@@ -196,7 +195,7 @@ const DATA = {
   },
 };
 
-export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterClick, onEmergencyClick }: Props) {
+export default function ServicesModal({ lang, onClose, onMapClick: _onMapClick, onNewsletterClick, onEmergencyClick }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const isAr = lang === "ar";
   const d = DATA[lang];
