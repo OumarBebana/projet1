@@ -32,6 +32,10 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS", "127.0.0.1,localhost,bawaba.mr,www.bawaba.mr"
 ).split(",")
+# Railway injects RAILWAY_PUBLIC_DOMAIN automatically
+_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
 
 
 # Application definition
@@ -50,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -80,26 +85,32 @@ WSGI_APPLICATION = 'govnews.wsgi.application'
 
 
 # ─── Database ──────────────────────────────────────────
-# SQLite (default) — switch to PostgreSQL by setting DB_ENGINE=postgresql
+# Priority: DATABASE_URL (Railway/Heroku) → DB_ENGINE env vars → SQLite
 
-_DB_ENGINE = os.environ.get('DB_ENGINE', 'sqlite').lower()
+_DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
-if _DB_ENGINE == 'postgresql':
+if _DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=_DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif os.environ.get('DB_ENGINE', '').lower() == 'postgresql':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('DB_NAME', 'bawaba'),
             'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', '123456'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
-            'OPTIONS': {
-                'connect_timeout': 10,
-            },
+            'OPTIONS': {'connect_timeout': 10},
         }
     }
 else:
-    # Default: SQLite — works without any configuration
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -125,19 +136,23 @@ USE_TZ = True
 
 
 # Static files
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── CORS ──────────────────────────────────────────────
-CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
+_cors_extra = os.environ.get("CORS_ALLOWED_ORIGINS", "")
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
-]
+] + [o.strip() for o in _cors_extra.split(",") if o.strip()]
+# In development allow all origins; in production use the list above
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 # ─── DRF ───────────────────────────────────────────────
 REST_FRAMEWORK = {

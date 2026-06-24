@@ -896,17 +896,18 @@ def scrape_energies_petrole(news_url: str, limit: int = 10, date_selector: str =
 
 def scrape_ami_mr(news_url: str, limit: int = 10, date_selector: str = "") -> list[ScrapedItem]:
     """Scraper pour ami.mr (Agence Mauritanienne d'Information)."""
-    # Try RSS first
-    rss_items = scrape_rss("https://ami.mr/rss.xml", limit=limit)
-    if rss_items:
-        return rss_items
+    # Try the working RSS feed first
+    for rss_candidate in ["https://ami.mr/feed/", "https://www.ami.mr/feed/"]:
+        rss_items = scrape_rss(rss_candidate, limit=limit)
+        if rss_items:
+            return rss_items
     # Fallback to scraping
     selectors = [
         'h3 a', 'h2 a',
         '.entry-title a',
+        'a[href*="/archives/"]',
         'a[href*="/article/"]',
         'a[href*="/news/"]',
-        'a[href*="/ar/"]',
     ]
     return _scrape_items(news_url, limit, selectors=selectors)
 
@@ -1025,6 +1026,97 @@ def _merge_items(existing: list[ScrapedItem], new_items: list[ScrapedItem], limi
     return merged[:limit]
 
 
+# ──────────────────────────────────────────────────────────────────────
+#  Breaking ticker scraper — targeted at confirmed Mauritanian gov sites
+#  Sources confirmed via live HTML inspection (June 2026):
+#    finances.gov.mr   → <marquee> + .breaking-news a
+#    education.gov.mr  → h2:contains(عاجل) → sibling links
+#    mfpam.gov.mr      → .breaking-news li a  (WordPress Tie theme)
+#    All others        → fallback: latest 5 articles from RSS
+# ──────────────────────────────────────────────────────────────────────
+
+# Sites with confirmed breaking/ticker HTML sections
+_BREAKING_SITE_CONFIGS: list[dict] = [
+    {
+        "slug": "economie-finances",
+        "url": "https://www.finances.gov.mr",
+        # Has real <marquee> and .breaking-news
+        "selectors": ["marquee", ".breaking-news"],
+        "source_label": "وزارة المالية",
+    },
+    {
+        "slug": "education",
+        "url": "https://education.gov.mr/ar/actualites",
+        # Has <h2>الأخبار العاجلة</h2> section
+        "selectors": ["__urgent_heading__"],
+        "source_label": "وزارة التربية",
+    },
+    {
+        "slug": "formation-professionnelle",
+        "url": "https://mfpam.gov.mr",
+        # WordPress Tie theme: .breaking-news ul li a
+        "selectors": [".breaking-news", ".breaking"],
+        "source_label": "وزارة التكوين المهني",
+    },
+]
+
+
+def _extract_links(container, base_url: str, seen: set, max_items: int = 5) -> list[ScrapedItem]:
+    """Extract article links from a container element."""
+    items: list[ScrapedItem] = []
+    for a in container.find_all("a", href=True):
+        title = a.get_text(strip=True)
+        if not title or len(title) < 12:
+            continue
+        key = title[:60].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        url = urljoin(base_url, a["href"])
+        items.append(ScrapedItem(title=title, url=url, fetch_method="breaking"))
+        if len(items) >= max_items:
+            break
+    return items
+
+
+def scrape_breaking_ticker(limit: int = 15) -> list[ScrapedItem]:
+    """Scrape breaking/urgent news sections from Mauritanian government websites."""
+    results: list[ScrapedItem] = []
+    seen_titles: set[str] = set()
+
+    for cfg in _BREAKING_SITE_CONFIGS:
+        if len(results) >= limit:
+            break
+        soup = _soup(cfg["url"], timeout=8)
+        if not soup:
+            continue
+
+        found: list[ScrapedItem] = []
+
+        for sel in cfg["selectors"]:
+            if sel == "__urgent_heading__":
+                # Find heading containing عاجل then grab sibling/parent links
+                for heading in soup.find_all(["h1", "h2", "h3", "h4"]):
+                    if "عاجل" in heading.get_text():
+                        parent = heading.find_parent(["div", "section", "article"]) or heading.parent
+                        found += _extract_links(parent, cfg["url"], seen_titles, 5)
+                        break
+            else:
+                for container in soup.select(sel):
+                    found += _extract_links(container, cfg["url"], seen_titles, 5)
+                    if found:
+                        break
+
+            if found:
+                break
+
+        if found:
+            logger.info("Breaking ticker: %d items from %s", len(found), cfg["slug"])
+            results.extend(found)
+
+    return results[:limit]
+
+
 def fetch_source_news(
     rss_url: str = "",
     news_url: str = "",
@@ -1061,8 +1153,8 @@ def fetch_source_news(
             logger.info("RSS OK (%d items) from %s", len(items), rss_url)
             all_items = items[:limit]
 
-    # ── Step 2: Sitemap ──
-    if base_url:
+    # ── Step 2: Sitemap (skip if RSS already filled quota) ──
+    if base_url and len(all_items) < limit:
         sitemap_url = discover_sitemap(base_url)
         if sitemap_url:
             items = scrape_sitemap(sitemap_url, limit=limit * 3)
@@ -1072,9 +1164,9 @@ def fetch_source_news(
                 logger.info("Sitemap OK (%d items) from %s", len(items), sitemap_url)
                 all_items = _merge_items(all_items, items, limit)
 
-    # ── Step 3: Web Scraping ──
+    # ── Step 3: Web Scraping (skip if RSS/sitemap already filled quota) ──
     target = news_url or website_url
-    if target:
+    if target and len(all_items) < limit:
         if scrape_link_selector:
             items = _scrape_items(target, limit, selectors=[scrape_link_selector], date_selector=scrape_date_selector)
         else:

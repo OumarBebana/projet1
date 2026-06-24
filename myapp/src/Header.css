@@ -124,7 +124,7 @@
 .breaking-track {
   display: inline-flex;
   align-items: center;
-  animation: moveNews 90s linear infinite;
+  animation: moveNews 60s linear infinite;
   white-space: nowrap;
 }
 .breaking-wrapper:hover .breaking-track {
@@ -171,7 +171,7 @@
 }
 
 .breaking-badge {
-  background: var(--red);
+  background: var(--green);
   color: #fff;
   font-size: 9px;
   font-weight: 800;
@@ -205,7 +205,7 @@
   color: #e5e7eb;
 }
 [data-theme="dark"] .breaking-badge {
-  background: #8b1a2b;
+  background: var(--green-dark);
 }
 
 [dir="rtl"] .breaking-item {
@@ -222,19 +222,19 @@
 
 /* ── Urgent vs Latest mode ─────────────────────────────── */
 .breaking-wrapper--urgent {
-  background: #fff5f5;
-  border-top-color: #fecaca;
-  border-bottom-color: #fca5a5;
+  background: #f0fdf4;
+  border-top-color: #bbf7d0;
+  border-bottom-color: #86efac;
 }
 
 [data-theme="dark"] .breaking-wrapper--urgent {
-  background: #1c0a0a;
-  border-top-color: #7f1d1d;
-  border-bottom-color: #991b1b;
+  background: #052e16;
+  border-top-color: #14532d;
+  border-bottom-color: #166534;
 }
 
 .breaking-label--urgent {
-  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  background: linear-gradient(135deg, #15803d, #16a34a);
 }
 
 .breaking-dot {

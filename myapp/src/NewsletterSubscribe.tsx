@@ -1,4 +1,11 @@
 import { useState, useCallback, useRef } from "react";
+import {
+  CalendarDays, CalendarRange, CheckCircle2, UserMinus,
+  ArrowLeft, ArrowRight, PartyPopper,
+  Newspaper, Landmark, Banknote, GraduationCap,
+  Building2, Shield, Car, Zap, Wheat, Leaf, Scale, Globe,
+  Check, ChevronLeft, ChevronRight,
+} from "lucide-react";
 
 type Frequency = "daily" | "weekly";
 type Lang = "ar" | "fr";
@@ -25,11 +32,11 @@ const TX = {
     emailLabel: "البريد الإلكتروني",
     emailPlaceholder: "example@email.com",
     freqLabel: "تكرار الإرسال",
-    daily: "📅 يومي", weekly: "📆 أسبوعي",
-    next: "التالي — اختر اهتماماتك ←",
-    back: "← رجوع",
+    daily: "يومي", weekly: "أسبوعي",
+    next: "التالي — اختر اهتماماتك",
+    back: "رجوع",
     chooseTopics: "اختر موضوعاً أو أكثر",
-    confirmSub: "✅ تأكيد الاشتراك",
+    confirmSub: "تأكيد الاشتراك",
     subscribing: "جاري الاشتراك…",
     successTitle: "تم الاشتراك بنجاح!",
     successMsg: (email: string, freq: string) =>
@@ -38,7 +45,7 @@ const TX = {
     alreadyTitle: "أنت مشترك بالفعل",
     alreadyMsg: (email: string) =>
       `البريد ${email} مشترك في النشرة البريدية.`,
-    unsubBtn: "🚫 إلغاء الاشتراك",
+    unsubBtn: "إلغاء الاشتراك",
     unsubConfirmTitle: "تأكيد الإلغاء",
     unsubConfirmMsg: "هل أنت متأكد من إلغاء الاشتراك؟",
     unsubConfirmYes: "نعم، إلغاء",
@@ -60,11 +67,11 @@ const TX = {
     emailLabel: "Adresse e-mail",
     emailPlaceholder: "example@email.com",
     freqLabel: "Fréquence d'envoi",
-    daily: "📅 Quotidien", weekly: "📆 Hebdomadaire",
-    next: "Suivant — Choisir les sujets →",
-    back: "← Retour",
+    daily: "Quotidien", weekly: "Hebdomadaire",
+    next: "Suivant — Choisir les sujets",
+    back: "Retour",
     chooseTopics: "Choisissez un ou plusieurs sujets",
-    confirmSub: "✅ Confirmer l'abonnement",
+    confirmSub: "Confirmer l'abonnement",
     subscribing: "Abonnement en cours…",
     successTitle: "Abonnement confirmé !",
     successMsg: (email: string, freq: string) =>
@@ -73,7 +80,7 @@ const TX = {
     alreadyTitle: "Vous êtes déjà abonné",
     alreadyMsg: (email: string) =>
       `L'adresse ${email} est déjà abonnée à la newsletter.`,
-    unsubBtn: "🚫 Se désabonner",
+    unsubBtn: "Se désabonner",
     unsubConfirmTitle: "Confirmer le désabonnement",
     unsubConfirmMsg: "Voulez-vous vraiment vous désabonner ?",
     unsubConfirmYes: "Oui, désabonner",
@@ -91,35 +98,58 @@ const TX = {
   },
 };
 
+/* ── Topic icon map ─────────────────────────────────────── */
+type TopicIconKey =
+  | "all" | "government" | "economy" | "education"
+  | "health" | "security" | "transport" | "energy"
+  | "agriculture" | "environment" | "justice" | "foreign_affairs";
+
+const TOPIC_ICONS: Record<TopicIconKey, React.ReactNode> = {
+  all:            <Newspaper size={22} />,
+  government:     <Landmark size={22} />,
+  economy:        <Banknote size={22} />,
+  education:      <GraduationCap size={22} />,
+  health:         <Building2 size={22} />,
+  security:       <Shield size={22} />,
+  transport:      <Car size={22} />,
+  energy:         <Zap size={22} />,
+  agriculture:    <Wheat size={22} />,
+  environment:    <Leaf size={22} />,
+  justice:        <Scale size={22} />,
+  foreign_affairs:<Globe size={22} />,
+};
+
 /* ── Topics ─────────────────────────────────────────────── */
-const TOPICS_AR = [
-  { id:"all",             label:"كل الأخبار",           icon:"📰", color:"#0d6b3c" },
-  { id:"government",      label:"الحكومة والسياسة",      icon:"🏛️", color:"#1d4ed8" },
-  { id:"economy",         label:"الاقتصاد والمالية",     icon:"💰", color:"#d97706" },
-  { id:"education",       label:"التعليم",               icon:"🎓", color:"#7c3aed" },
-  { id:"health",          label:"الصحة",                 icon:"🏥", color:"#dc2626" },
-  { id:"security",        label:"الدفاع والأمن",         icon:"🛡️", color:"#374151" },
-  { id:"transport",       label:"النقل والمواصلات",      icon:"🚗", color:"#0891b2" },
-  { id:"energy",          label:"الطاقة والبترول",       icon:"⚡", color:"#ca8a04" },
-  { id:"agriculture",     label:"الزراعة والصيد",        icon:"🌾", color:"#65a30d" },
-  { id:"environment",     label:"البيئة والمناخ",        icon:"🌿", color:"#16a34a" },
-  { id:"justice",         label:"العدل والقضاء",         icon:"⚖️", color:"#b45309" },
-  { id:"foreign_affairs", label:"الشؤون الخارجية",      icon:"🌍", color:"#0f766e" },
+interface Topic { id: TopicIconKey; label: string; color: string }
+
+const TOPICS_AR: Topic[] = [
+  { id:"all",             label:"كل الأخبار",           color:"#0d6b3c" },
+  { id:"government",      label:"الحكومة والسياسة",      color:"#1d4ed8" },
+  { id:"economy",         label:"الاقتصاد والمالية",     color:"#d97706" },
+  { id:"education",       label:"التعليم",               color:"#7c3aed" },
+  { id:"health",          label:"الصحة",                 color:"#dc2626" },
+  { id:"security",        label:"الدفاع والأمن",         color:"#374151" },
+  { id:"transport",       label:"النقل والمواصلات",      color:"#0891b2" },
+  { id:"energy",          label:"الطاقة والبترول",       color:"#ca8a04" },
+  { id:"agriculture",     label:"الزراعة والصيد",        color:"#65a30d" },
+  { id:"environment",     label:"البيئة والمناخ",        color:"#16a34a" },
+  { id:"justice",         label:"العدل والقضاء",         color:"#b45309" },
+  { id:"foreign_affairs", label:"الشؤون الخارجية",      color:"#0f766e" },
 ];
 
-const TOPICS_FR = [
-  { id:"all",             label:"Toutes les actualités", icon:"📰", color:"#0d6b3c" },
-  { id:"government",      label:"Gouvernement",          icon:"🏛️", color:"#1d4ed8" },
-  { id:"economy",         label:"Économie & Finances",   icon:"💰", color:"#d97706" },
-  { id:"education",       label:"Éducation",             icon:"🎓", color:"#7c3aed" },
-  { id:"health",          label:"Santé",                 icon:"🏥", color:"#dc2626" },
-  { id:"security",        label:"Défense & Sécurité",    icon:"🛡️", color:"#374151" },
-  { id:"transport",       label:"Transport",             icon:"🚗", color:"#0891b2" },
-  { id:"energy",          label:"Énergie & Pétrole",     icon:"⚡", color:"#ca8a04" },
-  { id:"agriculture",     label:"Agriculture & Pêche",   icon:"🌾", color:"#65a30d" },
-  { id:"environment",     label:"Environnement",         icon:"🌿", color:"#16a34a" },
-  { id:"justice",         label:"Justice",               icon:"⚖️", color:"#b45309" },
-  { id:"foreign_affairs", label:"Affaires étrangères",   icon:"🌍", color:"#0f766e" },
+const TOPICS_FR: Topic[] = [
+  { id:"all",             label:"Toutes les actualités", color:"#0d6b3c" },
+  { id:"government",      label:"Gouvernement",          color:"#1d4ed8" },
+  { id:"economy",         label:"Économie & Finances",   color:"#d97706" },
+  { id:"education",       label:"Éducation",             color:"#7c3aed" },
+  { id:"health",          label:"Santé",                 color:"#dc2626" },
+  { id:"security",        label:"Défense & Sécurité",    color:"#374151" },
+  { id:"transport",       label:"Transport",             color:"#0891b2" },
+  { id:"energy",          label:"Énergie & Pétrole",     color:"#ca8a04" },
+  { id:"agriculture",     label:"Agriculture & Pêche",   color:"#65a30d" },
+  { id:"environment",     label:"Environnement",         color:"#16a34a" },
+  { id:"justice",         label:"Justice",               color:"#b45309" },
+  { id:"foreign_affairs", label:"Affaires étrangères",   color:"#0f766e" },
 ];
 
 /* ── Component ──────────────────────────────────────────── */
@@ -138,10 +168,8 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
   const TOPICS = isAr ? TOPICS_AR : TOPICS_FR;
   const validEmail = email.includes("@") && email.includes(".");
 
-  // Debounce ref for subscription check
   const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* Check subscription status on email change */
   const handleEmailChange = useCallback((val: string) => {
     setEmail(val);
     setStep("form");
@@ -157,7 +185,6 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
     }, 500);
   }, []);
 
-  /* Toggle topic */
   const toggleTopic = (id: string) => {
     if (id === "all") { setTopics(["all"]); return; }
     setTopics(prev => {
@@ -166,7 +193,6 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
     });
   };
 
-  /* Subscribe */
   const handleSubscribe = async () => {
     if (!topics.length) { setError(t.errSelectTopic); return; }
     setLoading(true); setError("");
@@ -183,7 +209,6 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
     } finally { setLoading(false); }
   };
 
-  /* Unsubscribe */
   const handleUnsubscribe = async () => {
     setLoading(true); setError("");
     try {
@@ -252,16 +277,22 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
                   <button key={f}
                     style={{ ...S.freqBtn, ...(frequency===f ? S.freqActive : {}) }}
                     onClick={() => setFrequency(f)}>
-                    {f === "daily" ? t.daily : t.weekly}
+                    <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+                      {f === "daily"
+                        ? <CalendarDays size={16}/>
+                        : <CalendarRange size={16}/>}
+                      {f === "daily" ? t.daily : t.weekly}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
             <button
               disabled={!validEmail}
-              style={{ ...S.btnPrimary, opacity: validEmail ? 1 : 0.45 }}
+              style={{ ...S.btnPrimary, opacity: validEmail ? 1 : 0.45,
+                display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
               onClick={() => { if (validEmail) setStep("topics"); }}>
-              {t.next}
+              {isAr ? <><ArrowLeft size={16}/> {t.next}</> : <>{t.next} <ArrowRight size={16}/></>}
             </button>
           </div>
         )}
@@ -270,7 +301,14 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
         {step === "topics" && (
           <div style={S.body}>
             <div style={S.stepNav}>
-              <button style={S.backBtn} onClick={() => setStep("form")}>{t.back}</button>
+              <button style={S.backBtn}
+                onClick={() => setStep("form")}
+                title={t.back}>
+                <span style={{ display:"flex", alignItems:"center", gap:5 }}>
+                  {isAr ? <ChevronRight size={14}/> : <ChevronLeft size={14}/>}
+                  {t.back}
+                </span>
+              </button>
               <span style={S.stepHint}>{t.chooseTopics}</span>
             </div>
             <div style={S.topicsGrid}>
@@ -280,7 +318,10 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
                   <button key={topic.id} onClick={() => toggleTopic(topic.id)}
                     style={{ ...S.topicCard, borderColor: active ? topic.color : "#e5e7eb",
                       background: active ? topic.color+"12" : "#fff" }}>
-                    <span style={{ fontSize:22 }}>{topic.icon}</span>
+                    <span style={{ color: active ? topic.color : "#9ca3af",
+                      display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      {TOPIC_ICONS[topic.id]}
+                    </span>
                     <span style={{ fontSize:12, fontWeight:700, color: active ? topic.color : "#374151", lineHeight:1.3 }}>
                       {topic.label}
                     </span>
@@ -288,7 +329,9 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
                       <div style={{ position:"absolute", top:6, left:6, width:17, height:17,
                         borderRadius:"50%", background:topic.color,
                         display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:9, color:"#fff", fontWeight:900 }}>✓</div>
+                        color:"#fff" }}>
+                        <Check size={10} strokeWidth={3}/>
+                      </div>
                     )}
                   </button>
                 );
@@ -296,8 +339,10 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
             </div>
             {error && <div style={S.errorBox}>{error}</div>}
             <button disabled={loading || !topics.length}
-              style={{ ...S.btnPrimary, opacity: topics.length ? 1 : 0.45 }}
+              style={{ ...S.btnPrimary, opacity: topics.length ? 1 : 0.45,
+                display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
               onClick={handleSubscribe}>
+              <CheckCircle2 size={17}/>
               {loading ? t.subscribing : t.confirmSub}
             </button>
           </div>
@@ -305,8 +350,8 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
 
         {/* ══ STEP: success ══ */}
         {step === "success" && (
-          <div style={{ ...S.body, textAlign:"center", padding:"48px 28px" }}>
-            <div style={{ fontSize:60, marginBottom:14 }}>🎉</div>
+          <div style={{ ...S.body, textAlign:"center", padding:"48px 28px", alignItems:"center" }}>
+            <PartyPopper size={64} color="#0d6b3c" strokeWidth={1.5} style={{ marginBottom:14 }}/>
             <div style={S.stateTitle}>{t.successTitle}</div>
             <div style={S.stateDesc}>{t.successMsg(email, freqLabel(frequency))}</div>
             <button style={{ ...S.btnPrimary, padding:"10px 32px", width:"auto" }} onClick={onClose}>
@@ -318,7 +363,6 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
         {/* ══ STEP: already subscribed ══ */}
         {step === "already" && (
           <div style={{ ...S.body, alignItems:"center", textAlign:"center", padding:"36px 28px" }}>
-            {/* Already-subscribed icon */}
             <div style={S.statusIconWrap}>
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
                 <circle cx="22" cy="22" r="20" fill="#dcfce7"/>
@@ -331,7 +375,11 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
             {!confirmUnsub ? (
               <div style={{ display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:320 }}>
                 <button style={S.btnPrimary} onClick={onClose}>{t.close}</button>
-                <button style={S.btnDanger} onClick={() => setConfirmUnsub(true)}>{t.unsubBtn}</button>
+                <button style={{ ...S.btnDanger,
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
+                  onClick={() => setConfirmUnsub(true)}>
+                  <UserMinus size={16}/> {t.unsubBtn}
+                </button>
               </div>
             ) : (
               <div style={S.confirmBox}>
@@ -367,7 +415,6 @@ export default function NewsletterSubscribe({ onClose, onSuccess, defaultLang = 
             <div style={{ ...S.stateTitle, color:"#b91c1c" }}>{t.unsubDoneTitle}</div>
             <div style={S.stateDesc}>{t.unsubDoneMsg(email)}</div>
 
-            {/* Clearly show "not subscribed" badge */}
             <div style={S.notSubBadge}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <circle cx="7" cy="7" r="6" stroke="#dc2626" strokeWidth="1.4"/>

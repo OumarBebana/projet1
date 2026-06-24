@@ -142,9 +142,11 @@ export default function NewsFeed({ sourcesWithArticles, loading, error, lang, t,
             ? (source.name_ar || source.name_fr || source.name)
             : (source.name_fr || source.name_ar || source.name);
           const color   = sourceColor(source.slug);
-          const top5    = articles.slice(0, 5);
-          // detect fallback: showing Arabic content in French mode
-          const isFallback = !isAr && top5.length > 0 && top5.every(a => a.language === "ar");
+          const targetLang = isAr ? "ar" : "fr";
+          const langFiltered = articles.filter(a => a.language === targetLang);
+          // Fallback: show other-language articles only when NO articles in the target language exist
+          const top5 = (langFiltered.length > 0 ? langFiltered : articles).slice(0, 5);
+          const isFallback = top5.length > 0 && top5.every(a => a.language !== targetLang);
 
           return (
             <article key={source.id} className="mc-card">
@@ -160,7 +162,7 @@ export default function NewsFeed({ sourcesWithArticles, loading, error, lang, t,
                     {articles.length} {isAr ? "خبر" : "article"}
                     {isFallback && (
                       <span style={{ marginInlineStart: 6, fontSize: 10, opacity: 0.8, fontWeight: 600 }}>
-                        (AR)
+                        ({isAr ? "FR" : "AR"})
                       </span>
                     )}
                   </div>

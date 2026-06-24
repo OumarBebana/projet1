@@ -1,6 +1,7 @@
 import "./Header.css";
 import type { T, Lang } from "./i18n.ts";
 import MauritaniaLogo from "./MauritaniaLogo.tsx";
+import { Sun, Moon, Map } from "lucide-react";
 
 type TickerItem = {
   id: number;
@@ -39,7 +40,7 @@ export default function Header({
   const themeText = isDark
     ? (lang === "ar" ? "وضع مضيء" : "Mode clair")
     : (lang === "ar" ? "وضع داكن" : "Mode sombre");
-  const themeIcon = isDark ? "☀️" : "🌙";
+  const themeIcon = isDark ? <Sun size={15} /> : <Moon size={15} />;
 
   return (
     <header className="bw-header">
@@ -101,7 +102,7 @@ export default function Header({
             title={lang === "ar" ? "خريطة الوزارات" : "Carte des ministères"}
             aria-label="Map"
           >
-            🗺
+            <Map size={17} />
           </button>
         </div>
       </div>

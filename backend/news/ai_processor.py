@@ -206,18 +206,32 @@ def translate_title(title: str, target_lang: str = "fr") -> str:
 # ──────────────────────────────────────────────
 
 BREAKING_KEYWORDS = [
-    # Arabic — truly urgent only (explicit urgency markers)
+    # Arabic — urgent events
     "عاجل", "طارئ", "تنبيه هام", "تحذير عاجل",
     "اجتماع طارئ", "إعلان حالة الطوارئ", "حالة استثنائية",
-    "حادث خطير", "كارثة", "فيضانات", "زلزال",
-    "اغتيال", "هجوم مسلح", "انفجار",
+    "حادث خطير", "كارثة", "فيضانات", "زلزال", "جفاف",
+    "اغتيال", "هجوم مسلح", "انفجار", "حريق",
     "إضراب عام", "احتجاجات واسعة",
     "وفاة رئيس", "وفاة وزير",
-    # French — truly urgent only
+    # Arabic — important government announcements (موريتانيا)
+    "يترأس الرئيس", "المجلس الوزاري", "مرسوم رئاسي",
+    "قرار وزاري", "اتفاقية", "توقيع اتفاق",
+    "زيارة رسمية", "استقبل رئيس", "بحث مع",
+    "تعيين", "إعفاء", "تكليف",
+    "ميزانية", "مشروع قانون", "مجلس الشيوخ", "الجمعية الوطنية",
+    "انتخابات", "استفتاء",
+    "حصيلة", "ضحايا", "إصابات",
+    "أسعار", "ارتفاع الأسعار", "غلاء",
+    # French — urgent
     "urgent", "flash info", "alerte",
     "état d'urgence", "situation d'urgence",
-    "attentat", "explosion", "catastrophe",
+    "attentat", "explosion", "catastrophe", "incendie",
     "grève générale", "décès du président",
+    # French — important government announcements
+    "conseil des ministres", "décret présidentiel",
+    "accord signé", "visite officielle",
+    "nomination", "limogeage",
+    "projet de loi", "assemblée nationale",
 ]
 
 

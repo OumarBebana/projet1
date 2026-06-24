@@ -1,5 +1,12 @@
 import { useState } from "react";
 import type { Lang } from "./i18n";
+import {
+  Building2, ShieldCheck, Pill, Flame, Radio,
+  Mail, Zap, Landmark, Globe, BellOff,
+  FileText, CalendarDays, CreditCard, ClipboardList,
+  MapPin, Navigation, X, ChevronRight, ChevronLeft,
+  Clock, ArrowRight, ArrowLeft,
+} from "lucide-react";
 
 interface Props {
   lang: Lang;
@@ -8,6 +15,33 @@ interface Props {
   onNewsletterClick: () => void;
   onEmergencyClick?: () => void;
 }
+
+/* ── Feature icon map ───────────────────────────────────────── */
+type FeatureKey =
+  | "hospital" | "police" | "pharmacy" | "fire" | "signal"
+  | "mail" | "zap" | "landmark" | "globe" | "bellOff";
+
+const FEATURE_ICONS: Record<FeatureKey, React.ReactNode> = {
+  hospital:  <Building2 size={17} />,
+  police:    <ShieldCheck size={17} />,
+  pharmacy:  <Pill size={17} />,
+  fire:      <Flame size={17} />,
+  signal:    <Radio size={17} />,
+  mail:      <Mail size={17} />,
+  zap:       <Zap size={17} />,
+  landmark:  <Landmark size={17} />,
+  globe:     <Globe size={17} />,
+  bellOff:   <BellOff size={17} />,
+};
+
+/* Coming soon icon map */
+type ComingKey = "file" | "calendar" | "card" | "clipboard";
+const COMING_ICONS: Record<ComingKey, React.ReactNode> = {
+  file:      <FileText size={19} />,
+  calendar:  <CalendarDays size={19} />,
+  card:      <CreditCard size={19} />,
+  clipboard: <ClipboardList size={19} />,
+};
 
 /* ── SVG Icons ─────────────────────────────────────────────── */
 function IconMap() {
@@ -19,8 +53,6 @@ function IconMap() {
       <path d="M24 32c0 0 10 8 10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
       <path d="M24 32c0 0-10 8-10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
       <path d="M8 38h32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".4"/>
-      <circle cx="36" cy="12" r="6" fill="currentColor" opacity=".15"/>
-      <path d="M36 9v3l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -30,14 +62,11 @@ function IconNewsletter() {
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
       <rect x="6" y="12" width="36" height="26" rx="4" stroke="currentColor" strokeWidth="2.5" fill="none"/>
       <path d="M6 18l18 11 18-11" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-      <circle cx="38" cy="11" r="6" fill="currentColor" opacity=".2"/>
-      <path d="M35.5 11l2 2 3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M12 28h8M12 33h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".45"/>
     </svg>
   );
 }
 
-/* ── Decorative background pattern ─────────────────────────── */
 function PatternDots({ color }: { color: string }) {
   return (
     <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity:.07, pointerEvents:"none" }}
@@ -53,6 +82,9 @@ function PatternDots({ color }: { color: string }) {
 }
 
 /* ── Services data ──────────────────────────────────────────── */
+interface Feature { iconKey: FeatureKey; text: string }
+interface ComingItem { id: string; iconKey: ComingKey; bg: string; color: string; title: string; desc: string }
+
 const DATA = {
   ar: {
     title: "الخدمات الرقمية",
@@ -68,12 +100,12 @@ const DATA = {
         title: "خريطة الطوارئ",
         desc: "اعثر على أقرب مستشفى، مفوضية شرطة، صيدلية مناوبة وحماية مدنية — بأسرع طريق وفي أي وقت.",
         features: [
-          { icon: "🏥", text: "أقرب مستشفى فوراً" },
-          { icon: "🚔", text: "أقرب مفوضية شرطة" },
-          { icon: "💊", text: "صيدلية مناوبة ليلاً" },
-          { icon: "🚒", text: "حماية مدنية" },
-          { icon: "📡", text: "مشاركة موقعك في الطوارئ" },
-        ],
+          { iconKey: "hospital" as FeatureKey, text: "أقرب مستشفى فوراً" },
+          { iconKey: "police"   as FeatureKey, text: "أقرب مفوضية شرطة" },
+          { iconKey: "pharmacy" as FeatureKey, text: "صيدلية مناوبة ليلاً" },
+          { iconKey: "fire"     as FeatureKey, text: "حماية مدنية" },
+          { iconKey: "signal"   as FeatureKey, text: "مشاركة موقعك في الطوارئ" },
+        ] as Feature[],
         palette: {
           grad1: "#7c2d12", grad2: "#c2410c",
           light: "#fff7ed", accent: "#ea580c",
@@ -87,12 +119,12 @@ const DATA = {
         title: "النشرة البريدية",
         desc: "اشترك واستقبل أهم الأخبار الحكومية مباشرةً في بريدك حسب اهتماماتك ووزارتك المفضلة.",
         features: [
-          { icon: "📬", text: "ملخص يومي أو أسبوعي" },
-          { icon: "⚡", text: "تنبيهات فورية للأخبار العاجلة" },
-          { icon: "🏛️", text: "تصفية حسب الوزارة" },
-          { icon: "🌐", text: "باللغتين العربية والفرنسية" },
-          { icon: "🔕", text: "إلغاء الاشتراك في أي وقت" },
-        ],
+          { iconKey: "mail"     as FeatureKey, text: "ملخص يومي أو أسبوعي" },
+          { iconKey: "zap"      as FeatureKey, text: "تنبيهات فورية للأخبار العاجلة" },
+          { iconKey: "landmark" as FeatureKey, text: "تصفية حسب الوزارة" },
+          { iconKey: "globe"    as FeatureKey, text: "باللغتين العربية والفرنسية" },
+          { iconKey: "bellOff"  as FeatureKey, text: "إلغاء الاشتراك في أي وقت" },
+        ] as Feature[],
         palette: {
           grad1: "#14532d", grad2: "#166534",
           light: "#f0fdf4", accent: "#16a34a",
@@ -102,11 +134,11 @@ const DATA = {
       },
     ],
     coming: [
-      { id:"tracking",     icon:"📄", bg:"#eff6ff", color:"#1d4ed8", title:"تتبع الطلبات",   desc:"تتبع حالة وثيقتك أو طلبك الحكومي" },
-      { id:"appointments", icon:"📅", bg:"#fdf4ff", color:"#9333ea", title:"حجز مواعيد",     desc:"احجز موعدك في الوزارات إلكترونياً" },
-      { id:"payments",     icon:"💳", bg:"#fff7ed", color:"#ea580c", title:"الدفع الإلكتروني", desc:"سداد الرسوم والمستحقات الحكومية" },
-      { id:"docs",         icon:"📋", bg:"#f0fdf4", color:"#15803d", title:"الوثائق الرسمية", desc:"تحميل نماذج الطلبات الرسمية" },
-    ],
+      { id:"tracking",     iconKey:"file"      as ComingKey, bg:"#eff6ff", color:"#1d4ed8", title:"تتبع الطلبات",    desc:"تتبع حالة وثيقتك أو طلبك الحكومي" },
+      { id:"appointments", iconKey:"calendar"  as ComingKey, bg:"#fdf4ff", color:"#9333ea", title:"حجز مواعيد",      desc:"احجز موعدك في الوزارات إلكترونياً" },
+      { id:"payments",     iconKey:"card"      as ComingKey, bg:"#fff7ed", color:"#ea580c", title:"الدفع الإلكتروني", desc:"سداد الرسوم والمستحقات الحكومية" },
+      { id:"docs",         iconKey:"clipboard" as ComingKey, bg:"#f0fdf4", color:"#15803d", title:"الوثائق الرسمية", desc:"تحميل نماذج الطلبات الرسمية" },
+    ] as ComingItem[],
   },
   fr: {
     title: "Services numériques",
@@ -122,12 +154,12 @@ const DATA = {
         title: "Carte d'urgence",
         desc: "Trouvez l'hôpital, le commissariat, la pharmacie de garde ou la protection civile les plus proches — rapidement.",
         features: [
-          { icon: "🏥", text: "Hôpital le plus proche" },
-          { icon: "🚔", text: "Commissariat de police" },
-          { icon: "💊", text: "Pharmacie de garde" },
-          { icon: "🚒", text: "Protection civile" },
-          { icon: "📡", text: "Partage de position d'urgence" },
-        ],
+          { iconKey: "hospital" as FeatureKey, text: "Hôpital le plus proche" },
+          { iconKey: "police"   as FeatureKey, text: "Commissariat de police" },
+          { iconKey: "pharmacy" as FeatureKey, text: "Pharmacie de garde" },
+          { iconKey: "fire"     as FeatureKey, text: "Protection civile" },
+          { iconKey: "signal"   as FeatureKey, text: "Partage de position d'urgence" },
+        ] as Feature[],
         palette: {
           grad1: "#7c2d12", grad2: "#c2410c",
           light: "#fff7ed", accent: "#ea580c",
@@ -141,12 +173,12 @@ const DATA = {
         title: "Newsletter",
         desc: "Abonnez-vous pour recevoir l'actualité gouvernementale mauritanienne directement dans votre boîte mail.",
         features: [
-          { icon: "📬", text: "Résumé quotidien ou hebdomadaire" },
-          { icon: "⚡", text: "Alertes urgentes en temps réel" },
-          { icon: "🏛️", text: "Filtrage par ministère" },
-          { icon: "🌐", text: "En arabe et en français" },
-          { icon: "🔕", text: "Désinscription à tout moment" },
-        ],
+          { iconKey: "mail"     as FeatureKey, text: "Résumé quotidien ou hebdomadaire" },
+          { iconKey: "zap"      as FeatureKey, text: "Alertes urgentes en temps réel" },
+          { iconKey: "landmark" as FeatureKey, text: "Filtrage par ministère" },
+          { iconKey: "globe"    as FeatureKey, text: "En arabe et en français" },
+          { iconKey: "bellOff"  as FeatureKey, text: "Désinscription à tout moment" },
+        ] as Feature[],
         palette: {
           grad1: "#14532d", grad2: "#166534",
           light: "#f0fdf4", accent: "#16a34a",
@@ -156,11 +188,11 @@ const DATA = {
       },
     ],
     coming: [
-      { id:"tracking",     icon:"📄", bg:"#eff6ff", color:"#1d4ed8", title:"Suivi des demandes",      desc:"Suivez l'état de votre dossier" },
-      { id:"appointments", icon:"📅", bg:"#fdf4ff", color:"#9333ea", title:"Prise de rendez-vous",    desc:"Réservez en ligne dans les ministères" },
-      { id:"payments",     icon:"💳", bg:"#fff7ed", color:"#ea580c", title:"Paiement en ligne",        desc:"Réglez les frais gouvernementaux" },
-      { id:"docs",         icon:"📋", bg:"#f0fdf4", color:"#15803d", title:"Documents officiels",     desc:"Téléchargez les formulaires officiels" },
-    ],
+      { id:"tracking",     iconKey:"file"      as ComingKey, bg:"#eff6ff", color:"#1d4ed8", title:"Suivi des demandes",    desc:"Suivez l'état de votre dossier" },
+      { id:"appointments", iconKey:"calendar"  as ComingKey, bg:"#fdf4ff", color:"#9333ea", title:"Prise de rendez-vous",  desc:"Réservez en ligne dans les ministères" },
+      { id:"payments",     iconKey:"card"      as ComingKey, bg:"#fff7ed", color:"#ea580c", title:"Paiement en ligne",      desc:"Réglez les frais gouvernementaux" },
+      { id:"docs",         iconKey:"clipboard" as ComingKey, bg:"#f0fdf4", color:"#15803d", title:"Documents officiels",   desc:"Téléchargez les formulaires officiels" },
+    ] as ComingItem[],
   },
 };
 
@@ -181,7 +213,6 @@ export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterC
 
         {/* ── Header ── */}
         <div style={S.header}>
-          {/* decorative circles */}
           <div style={S.headerCircle1} />
           <div style={S.headerCircle2} />
           <div style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", gap:14 }}>
@@ -201,9 +232,7 @@ export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterC
             </div>
           </div>
           <button style={S.closeBtn} onClick={onClose} aria-label="close">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
+            <X size={14} color="white"/>
           </button>
         </div>
 
@@ -255,7 +284,9 @@ export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterC
                   <div style={S.featuresWrap}>
                     {svc.features.map((f, i) => (
                       <div key={i} style={S.featureRow}>
-                        <span style={{ fontSize: 15, flexShrink: 0 }}>{f.icon}</span>
+                        <span style={{ color: svc.palette.accent, flexShrink:0, display:"flex", alignItems:"center" }}>
+                          {FEATURE_ICONS[f.iconKey]}
+                        </span>
                         <span style={S.featureText}>{f.text}</span>
                       </div>
                     ))}
@@ -269,9 +300,10 @@ export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterC
                         ...S.ctaBtn,
                         background: `linear-gradient(135deg, ${svc.palette.btnFrom}, ${svc.palette.btnTo})`,
                         boxShadow: `0 4px 14px ${svc.palette.accent}40`,
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                       }}
                     >
-                      {isAr ? `← ${d.openBtn}` : `${d.openBtn} →`}
+                      {isAr ? <><ArrowLeft size={15}/> {d.openBtn}</> : <>{d.openBtn} <ArrowRight size={15}/></>}
                     </button>
                   </div>
                 </div>
@@ -290,7 +322,7 @@ export default function ServicesModal({ lang, onClose, onMapClick, onNewsletterC
             {d.coming.map(item => (
               <div key={item.id} style={S.comingCard}>
                 <div style={{ ...S.comingIcon, background: item.bg, color: item.color }}>
-                  <span style={{ fontSize: 17 }}>{item.icon}</span>
+                  {COMING_ICONS[item.iconKey]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={S.comingTitle}>
@@ -325,8 +357,6 @@ const S: Record<string, React.CSSProperties> = {
     boxShadow:"0 24px 64px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,.12)",
     animation:"sv-down .3s cubic-bezier(.2,.8,.4,1)",
   },
-
-  /* Header */
   header: {
     background:"linear-gradient(135deg,#052e16,#14532d,#166534)",
     padding:"20px 24px",
@@ -356,15 +386,9 @@ const S: Record<string, React.CSSProperties> = {
     cursor:"pointer", flexShrink:0, position:"relative", zIndex:1,
     transition:"background .15s",
   },
-
-  /* Body */
   body: { padding:"24px 22px 26px" },
   chooseLabel: { textAlign:"center", fontSize:13, color:"#9ca3af", marginBottom:20, fontWeight:500 },
-
-  /* 2-col card grid */
   cardsGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 },
-
-  /* Card */
   card: {
     borderRadius:16, border:"2px solid #e5e7eb",
     display:"flex", flexDirection:"column",
@@ -387,16 +411,12 @@ const S: Record<string, React.CSSProperties> = {
     fontSize:10.5, padding:"4px 10px", borderRadius:20,
     fontWeight:700, letterSpacing:.4, flexShrink:0,
   },
-
-  /* Features */
   featuresWrap: { padding:"14px 18px", flex:1 },
   featureRow: {
     display:"flex", alignItems:"center", gap:10,
     padding:"7px 0", borderBottom:"1px solid #f3f4f6",
   },
   featureText: { fontSize:13, color:"#374151", fontWeight:500, lineHeight:1.4 },
-
-  /* CTA */
   cardCta: { padding:"14px 18px 18px" },
   ctaBtn: {
     width:"100%", padding:"12px 0", borderRadius:10,
@@ -405,13 +425,9 @@ const S: Record<string, React.CSSProperties> = {
     transition:"opacity .15s, transform .15s",
     letterSpacing:.3,
   },
-
-  /* Divider */
   dividerRow: { display:"flex", alignItems:"center", gap:12, margin:"22px 0 14px" },
   divLine: { flex:1, height:1, background:"#e5e7eb" },
   divLabel: { fontSize:11.5, color:"#9ca3af", whiteSpace:"nowrap", fontWeight:600, letterSpacing:.3 },
-
-  /* Coming soon */
   comingGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 },
   comingCard: {
     background:"white", border:"1.5px solid #f3f4f6",

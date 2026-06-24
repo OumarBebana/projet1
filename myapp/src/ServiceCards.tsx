@@ -1,5 +1,10 @@
 import { useState } from "react";
 import type { Lang } from "./i18n";
+import {
+  Map, MapPin, Mail, Inbox, Bot, MessageCircle,
+  Bell, Megaphone, Building, BarChart2, FileText,
+  ClipboardList, Zap, ChevronLeft, ChevronRight,
+} from "lucide-react";
 
 interface Props {
   lang: Lang;
@@ -7,10 +12,31 @@ interface Props {
   onNewsletterClick: () => void;
 }
 
+type CardIconKey = "map" | "mail" | "bot" | "bell" | "building" | "file";
+type BgIconKey   = "pin" | "inbox" | "chat" | "megaphone" | "chart" | "clipboard";
+
+const CARD_ICONS: Record<CardIconKey, React.ReactNode> = {
+  map:      <Map size={22} />,
+  mail:     <Mail size={22} />,
+  bot:      <Bot size={22} />,
+  bell:     <Bell size={22} />,
+  building: <Building size={22} />,
+  file:     <FileText size={22} />,
+};
+
+const BG_ICONS: Record<BgIconKey, React.ReactNode> = {
+  pin:       <MapPin size={60} strokeWidth={1} />,
+  inbox:     <Inbox size={60} strokeWidth={1} />,
+  chat:      <MessageCircle size={60} strokeWidth={1} />,
+  megaphone: <Megaphone size={60} strokeWidth={1} />,
+  chart:     <BarChart2 size={60} strokeWidth={1} />,
+  clipboard: <ClipboardList size={60} strokeWidth={1} />,
+};
+
 interface Card {
   id: string;
-  icon: string;
-  bgIcon: string;
+  iconKey: CardIconKey;
+  bgIconKey: BgIconKey;
   titleAr: string;
   titleFr: string;
   descAr: string;
@@ -31,8 +57,8 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
   const cards: Card[] = [
     {
       id: "map",
-      icon: "🗺️",
-      bgIcon: "📍",
+      iconKey: "map",
+      bgIconKey: "pin",
       titleAr: "الخرائط الحكومية الذكية",
       titleFr: "Cartes gouvernementales",
       descAr: "استكشف مواقع الوزارات واحصل على أفضل مسار للوصول إليها مع التوجيه الذكي.",
@@ -45,8 +71,8 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
     },
     {
       id: "newsletter",
-      icon: "📧",
-      bgIcon: "✉️",
+      iconKey: "mail",
+      bgIconKey: "inbox",
       titleAr: "النشرة البريدية الذكية",
       titleFr: "Newsletter intelligente",
       descAr: "اشترك لتصلك آخر الأخبار والقرارات الحكومية حسب اهتماماتك عبر البريد.",
@@ -60,8 +86,8 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
     },
     {
       id: "assistant",
-      icon: "🤖",
-      bgIcon: "💬",
+      iconKey: "bot",
+      bgIconKey: "chat",
       titleAr: "المساعد الحكومي الذكي",
       titleFr: "Assistant IA gouvernemental",
       descAr: "اسأل عن الخدمات الحكومية، الوثائق المطلوبة، والمواقع الجغرافية للمؤسسات.",
@@ -74,8 +100,8 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
     },
     {
       id: "alerts",
-      icon: "🔔",
-      bgIcon: "📢",
+      iconKey: "bell",
+      bgIconKey: "megaphone",
       titleAr: "التنبيهات الفورية",
       titleFr: "Alertes immédiates",
       descAr: "استقبل إشعارات فورية عند صدور أخبار أو قرارات حكومية جديدة.",
@@ -84,13 +110,13 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
       bgColor: "#fff3e0",
       borderColor: "#ffcc80",
       blobColor: "#ffe0b2",
-      badge: { ar: "🚨 عاجل", fr: "🚨 URGENT", color: "#dc2626" },
+      badge: { ar: "عاجل", fr: "URGENT", color: "#dc2626" },
       soon: true,
     },
     {
       id: "projects",
-      icon: "🏗️",
-      bgIcon: "📊",
+      iconKey: "building",
+      bgIconKey: "chart",
       titleAr: "خريطة المشاريع الوطنية",
       titleFr: "Carte des projets nationaux",
       descAr: "تابع المشاريع الحكومية حسب الولاية ونسبة الإنجاز والحالة الراهنة.",
@@ -103,8 +129,8 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
     },
     {
       id: "documents",
-      icon: "📄",
-      bgIcon: "📋",
+      iconKey: "file",
+      bgIconKey: "clipboard",
       titleAr: "الخدمات الإلكترونية",
       titleFr: "Services en ligne",
       descAr: "دليل شامل للوثائق والإجراءات الإدارية اللازمة في المؤسسات الحكومية.",
@@ -122,8 +148,9 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
       {/* Section header */}
       <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "var(--text-h)" }}>
-            {isAr ? "⚡ الخدمات الرقمية" : "⚡ Services numériques"}
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "var(--text-h)", display: "flex", alignItems: "center", gap: 8 }}>
+            <Zap size={18} color="var(--green)"/>
+            {isAr ? "الخدمات الرقمية" : "Services numériques"}
           </h2>
           <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "var(--text-muted)" }}>
             {isAr ? "وصول سريع لجميع خدمات بوابة موريتانيا" : "Accès rapide à tous les services du portail"}
@@ -163,7 +190,7 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
                 opacity: card.soon ? 0.85 : 1,
               }}
             >
-              {/* Decorative blob background */}
+              {/* Decorative blobs */}
               <div style={{
                 position: "absolute", top: -20, right: isAr ? "auto" : -20, left: isAr ? -20 : "auto",
                 width: 120, height: 120, borderRadius: "50%",
@@ -175,25 +202,25 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
                 background: card.blobColor, opacity: 0.4,
               }} />
 
-              {/* Top: main icon badge */}
+              {/* Main icon badge */}
               <div style={{ position: "absolute", top: 16, right: isAr ? "auto" : 16, left: isAr ? 16 : "auto" }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: 14,
                   background: card.color, display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: 22,
+                  justifyContent: "center", color: "#fff",
                   boxShadow: `0 4px 14px ${card.color}55`,
                 }}>
-                  {card.icon}
+                  {CARD_ICONS[card.iconKey]}
                 </div>
               </div>
 
               {/* Large ghost icon */}
               <div style={{
                 position: "absolute", top: 8, left: isAr ? "auto" : 8, right: isAr ? 8 : "auto",
-                fontSize: 64, opacity: 0.08, lineHeight: 1, pointerEvents: "none",
-                filter: "grayscale(30%)",
+                opacity: 0.07, lineHeight: 1, pointerEvents: "none",
+                color: card.color,
               }}>
-                {card.bgIcon}
+                {BG_ICONS[card.bgIconKey]}
               </div>
 
               {/* Content */}
@@ -205,21 +232,21 @@ export default function ServiceCards({ lang, onMapClick, onNewsletterClick }: Pr
                   {isAr ? card.descAr : card.descFr}
                 </div>
 
-                {/* Footer row */}
+                {/* Footer */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   {card.soon ? (
-                    <span style={{ fontSize: 11, fontWeight: 800, color: card.color, background: `${card.color}18`, padding: "3px 10px", borderRadius: 20 }}>
-                      🔜 {isAr ? "قريباً" : "Bientôt"}
+                    <span style={{ fontSize: 11, fontWeight: 800, color: card.color, background: `${card.color}18`, padding: "3px 10px", borderRadius: 20,
+                      display:"flex", alignItems:"center", gap:5 }}>
+                      <Zap size={11}/> {isAr ? "قريباً" : "Bientôt"}
                     </span>
                   ) : (
                     <span style={{
                       fontSize: 12, fontWeight: 800, color: card.color,
                       display: "flex", alignItems: "center", gap: 4,
-                      transition: "gap .2s",
                     }}>
                       {isAr ? "اضغط للدخول" : "Accéder"}
-                      <span style={{ display: "inline-block", transition: "transform .2s", transform: isHov ? (isAr ? "translateX(-4px)" : "translateX(4px)") : "none" }}>
-                        {isAr ? "←" : "→"}
+                      <span style={{ display: "inline-flex", transition: "transform .2s", transform: isHov ? (isAr ? "translateX(-4px)" : "translateX(4px)") : "none" }}>
+                        {isAr ? <ChevronLeft size={16}/> : <ChevronRight size={16}/>}
                       </span>
                     </span>
                   )}

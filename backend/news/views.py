@@ -1,6 +1,8 @@
 import hashlib
 import hmac
 import logging
+import time
+import threading
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -125,13 +127,47 @@ class LatestTitlesView(APIView):
         return Response(data)
 
 
+# ── Breaking ticker cache (avoids slow live scrape on every request) ──
+_ticker_cache: list = []
+_ticker_cache_ts: float = 0.0
+_ticker_cache_lock = threading.Lock()
+_TICKER_TTL = 300  # 5 minutes
+
+
+def _refresh_ticker_cache() -> list:
+    """Scrape live breaking items and update cache. Called in background thread."""
+    from news.scrapers import scrape_breaking_ticker
+    try:
+        items = scrape_breaking_ticker(limit=15)
+    except Exception:
+        items = []
+    with _ticker_cache_lock:
+        global _ticker_cache, _ticker_cache_ts
+        if items:
+            _ticker_cache = items
+        _ticker_cache_ts = time.time()
+    return items
+
+
+def _get_ticker_cache() -> list:
+    """Return cached items; trigger background refresh if stale."""
+    now = time.time()
+    with _ticker_cache_lock:
+        age = now - _ticker_cache_ts
+        cached = list(_ticker_cache)
+    if age > _TICKER_TTL:
+        threading.Thread(target=_refresh_ticker_cache, daemon=True).start()
+    return cached
+
+
 class BreakingNewsView(APIView):
     """Return breaking news for the ticker.
 
     Priority:
-    1. Articles explicitly marked is_breaking=True (real breaking news)
-    2. Fallback: 15 most recent articles (so ticker is never empty)
-    Supports ?lang=ar|fr and ?n=<count>
+    1. Live scrape of 'شريط عاجل' sections on government websites
+    2. Articles in DB marked is_breaking=True
+    3. Latest AMI (national news agency) articles
+    4. Latest articles from any source (fallback)
     """
 
     def get(self, request):
@@ -142,38 +178,49 @@ class BreakingNewsView(APIView):
             n = 15
         n = max(5, min(n, 30))
 
-        base_qs = Article.objects.select_related("source")
-        if lang in ("ar", "fr"):
-            base_qs = base_qs.filter(language=lang)
-
-        # Priority 1: real breaking news
-        breaking_qs = base_qs.filter(is_breaking=True).order_by(
-            F("published_at").desc(nulls_last=True), "-id"
-        )[:n]
-        items = list(breaking_qs)
-
-        # Priority 2: fall back to latest articles if no breaking news
-        if not items:
-            items = list(
-                base_qs.order_by(F("published_at").desc(nulls_last=True), "-id")[:n]
-            )
-
         data = []
-        for a in items:
-            src = a.source
-            if lang == "fr":
-                src_name = src.name_fr or src.name_ar or src.name
-            else:
-                src_name = src.name_ar or src.name_fr or src.name
-            data.append({
-                "id": a.id,
-                "title": a.title,
-                "url": a.url,
-                "source_name": src_name,
-                "is_breaking": a.is_breaking,
-                "published_at": a.published_at,
-            })
-        return Response({"results": data, "count": len(data)})
+
+        # Priority 1: cached live scrape — Arabic only (gov sites are Arabic)
+        if lang != "fr":
+            live = _get_ticker_cache()
+            for item in live:
+                data.append({
+                    "id": 0,
+                    "title": item.title,
+                    "url": item.url,
+                    "source_name": "عاجل",
+                    "is_breaking": True,
+                    "published_at": None,
+                })
+
+        # Priority 2: DB articles — latest from ALL sources (1 per source, most recent)
+        if len(data) < n:
+            base_qs = Article.objects.select_related("source")
+            if lang in ("ar", "fr"):
+                base_qs = base_qs.filter(language=lang)
+
+            seen_sources: set[str] = set()
+            remaining = n - len(data)
+            for a in base_qs.order_by(F("published_at").desc(nulls_last=True), "-id")[:n * 6]:
+                slug = a.source.slug if a.source else ""
+                if slug in seen_sources:
+                    continue
+                seen_sources.add(slug)
+                src = a.source
+                src_name = (src.name_fr or src.name_ar or src.name) if lang == "fr" \
+                    else (src.name_ar or src.name_fr or src.name)
+                data.append({
+                    "id": a.id,
+                    "title": a.title,
+                    "url": a.url,
+                    "source_name": src_name,
+                    "is_breaking": a.is_breaking,
+                    "published_at": a.published_at,
+                })
+                if len(data) - len(live) >= remaining:
+                    break
+
+        return Response({"results": data[:n], "count": min(len(data), n)})
 
 
 class FetchNowView(APIView):

@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import {
+  ArrowLeft, ArrowRight, AlertOctagon, Volume2, VolumeX, Share2,
+  MapPin, Navigation, Search, X, Phone, Map, Ruler, Clock,
+  Car, PersonStanding, Star, ChevronUp, ChevronDown,
+  ChevronLeft, ChevronRight, Radio, Link2, MessageCircle,
+  CheckCircle2, Square, Crosshair, PartyPopper, Loader2,
+  ShieldCheck, Flame, Pill, Building2,
+} from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type EmType = "hospital" | "police" | "civil_protection" | "pharmacy";
@@ -19,12 +27,20 @@ interface RouteInfo {
   steps: { text: string; dist: string }[];
 }
 
+/* ─── Type icons (SVG components) ───────────────────────────────── */
+const TYPE_ICON: Record<EmType, React.ReactNode> = {
+  hospital:         <Building2 size={17} />,
+  police:           <ShieldCheck size={17} />,
+  civil_protection: <Flame size={17} />,
+  pharmacy:         <Pill size={17} />,
+};
+
 /* ─── Config ─────────────────────────────────────────────────────── */
-const CFG: Record<EmType, { icon:string; color:string; ar:string; fr:string; sos:string; osmKey:string; osmVal:string }> = {
-  hospital:         { icon:"🏥", color:"#dc2626", ar:"مستشفى",       fr:"Hôpital",      sos:"101", osmKey:"amenity", osmVal:"hospital"     },
-  police:           { icon:"🚔", color:"#1d4ed8", ar:"مفوضية شرطة",  fr:"Police",       sos:"17",  osmKey:"amenity", osmVal:"police"       },
-  civil_protection: { icon:"🚒", color:"#ea580c", ar:"حماية مدنية",  fr:"Prot. Civile", sos:"18",  osmKey:"amenity", osmVal:"fire_station" },
-  pharmacy:         { icon:"💊", color:"#16a34a", ar:"صيدلية",       fr:"Pharmacie",    sos:"15",  osmKey:"amenity", osmVal:"pharmacy"     },
+const CFG: Record<EmType, { color:string; ar:string; fr:string; sos:string; osmKey:string; osmVal:string }> = {
+  hospital:         { color:"#dc2626", ar:"مستشفى",       fr:"Hôpital",      sos:"101", osmKey:"amenity", osmVal:"hospital"     },
+  police:           { color:"#1d4ed8", ar:"مفوضية شرطة",  fr:"Police",       sos:"17",  osmKey:"amenity", osmVal:"police"       },
+  civil_protection: { color:"#ea580c", ar:"حماية مدنية",  fr:"Prot. Civile", sos:"18",  osmKey:"amenity", osmVal:"fire_station" },
+  pharmacy:         { color:"#16a34a", ar:"صيدلية",       fr:"Pharmacie",    sos:"15",  osmKey:"amenity", osmVal:"pharmacy"     },
 };
 
 const TYPES: EmType[] = ["hospital","police","civil_protection","pharmacy"];
@@ -38,7 +54,6 @@ const hav = (a:[number,number], b:[number,number]) => {
   return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 };
 const fmtD = (km:number) => km<1?`${Math.round(km*1000)} م`:`${km.toFixed(1)} كم`;
-const fmtT = (min:number) => min<60?`${min} د`:`${Math.floor(min/60)}س ${min%60}د`;
 const gmaps = (from:[number,number]|null, to:[number,number]) =>
   from?`https://www.google.com/maps/dir/${from[0]},${from[1]}/${to[0]},${to[1]}`
       :`https://www.google.com/maps/search/?api=1&query=${to[0]},${to[1]}`;
@@ -57,6 +72,7 @@ async function fetchOSM(type:EmType, lat:number, lon:number, radiusKm=8): Promis
     const ctrl = new AbortController(); setTimeout(()=>ctrl.abort(),12000);
     const r = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`,{signal:ctrl.signal});
     const d = await r.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (d.elements as any[]).map((el,i)=>{
       const plat = el.lat ?? el.center?.lat;
       const plon = el.lon ?? el.center?.lon;
@@ -72,7 +88,7 @@ async function fetchOSM(type:EmType, lat:number, lon:number, radiusKm=8): Promis
   } catch { return []; }
 }
 
-/* ─── Nominatim geocoding (free text → coords) ─────────────────── */
+/* ─── Nominatim geocoding ────────────────────────────────────────── */
 async function geocodeNominatim(query:string): Promise<{lat:number;lon:number;display:string}|null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=mr&format=json&limit=1`;
@@ -104,6 +120,7 @@ const MANEUVER_FR: Record<string,string> = {
   "arrive":"Vous êtes arrivé","depart":"Démarrez",
   "exit roundabout":"Sortez du rond-point","exit rotary":"Sortez du grand rond-point",
 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function translateStep(s:any, isAr:boolean): string {
   const type = s.maneuver?.type??"";
   const modifier = s.maneuver?.modifier??"";
@@ -126,35 +143,48 @@ async function calcRoute(from:[number,number], to:[number,number], mode:TMode, i
     const r=await fetch(url,{signal:ctrl.signal}); const d=await r.json();
     if (d.code!=="Ok"||!d.routes?.length) return null;
     const rt=d.routes[0];
-    const steps=(rt.legs?.[0]?.steps??[]).slice(0,20).map((s:any)=>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const steps=((rt.legs?.[0]?.steps??[]) as any[]).slice(0,20).map((s)=>({
       text: translateStep(s, isAr),
       dist: fmtStepDist(s.distance, isAr),
     }));
-    const poly:([number,number][])=rt.geometry.coordinates.map((c:number[])=>[c[1],c[0]]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const poly:([number,number][])=(rt.geometry.coordinates as any[]).map((c:[number,number])=>[c[1],c[0]]);
     const drMin=Math.max(1,Math.round(rt.duration/60));
     return{poly,distKm:(rt.distance/1000).toFixed(2),driveCar:drMin,driveWalk:Math.round(drMin*5),steps};
   } catch { return null; }
 }
 
-/* ─── Map helpers ────────────────────────────────────────────────── */
+/* ─── Map pin icons (SVG inline — no emojis) ─────────────────────── */
+const PIN_SVG: Record<EmType, string> = {
+  hospital: `<svg viewBox="0 0 40 40" width="{{S}}" height="{{S}}" style="transform:rotate(45deg)"><rect width="40" height="40" rx="8" fill="{{BG}}"/><rect x="17" y="8" width="6" height="24" rx="2" fill="{{FG}}"/><rect x="8" y="17" width="24" height="6" rx="2" fill="{{FG}}"/></svg>`,
+  police:   `<svg viewBox="0 0 40 40" width="{{S}}" height="{{S}}" style="transform:rotate(45deg)"><path d="M20 4 L28 10 v12 c0 8-8 12-8 12s-8-4-8-12V10z" fill="{{BG}}"/><path d="M16 18h8M20 14v8" stroke="{{FG}}" stroke-width="3" stroke-linecap="round"/></svg>`,
+  civil_protection: `<svg viewBox="0 0 40 40" width="{{S}}" height="{{S}}" style="transform:rotate(45deg)"><circle cx="20" cy="20" r="18" fill="{{BG}}"/><path d="M14 26c0-6 4-10 6-14 2 4 6 8 6 14" fill="{{FG}}" opacity=".9"/><path d="M11 30c3-4 6-6 9-5s6 1 9 5" fill="{{FG}}" opacity=".5"/></svg>`,
+  pharmacy: `<svg viewBox="0 0 40 40" width="{{S}}" height="{{S}}" style="transform:rotate(45deg)"><rect width="40" height="40" rx="8" fill="{{BG}}"/><ellipse cx="20" cy="17" rx="8" ry="6" fill="{{FG}}"/><rect x="12" y="20" width="16" height="10" rx="2" fill="{{FG}}"/><rect x="18" y="22" width="4" height="6" rx="1" fill="{{BG}}"/></svg>`,
+};
+
 function pinIcon(type:EmType, active=false, fav=false): L.DivIcon {
-  const{icon,color}=CFG[type]; const s=active?46:34;
+  const { color } = CFG[type];
+  const s = active ? 46 : 34;
   const svgSize = Math.round(s * 0.55);
-  const innerContent = type==="hospital"||type==="pharmacy"
-    ? `<svg viewBox="0 0 40 40" width="${svgSize}" height="${svgSize}" style="transform:rotate(45deg)"><rect width="40" height="40" rx="8" fill="${active?"#fff":color}"/><rect x="17" y="8" width="6" height="24" rx="2" fill="${active?color:"#fff"}"/><rect x="8" y="17" width="24" height="6" rx="2" fill="${active?color:"#fff"}"/></svg>`
-    : `<span style="transform:rotate(45deg);font-size:${s*.38}px;line-height:1">${icon}</span>`;
+  const bg = active ? "#fff" : color;
+  const fg = active ? color : "#fff";
+  const inner = PIN_SVG[type]
+    .replace(/\{\{S\}\}/g, String(svgSize))
+    .replace(/\{\{BG\}\}/g, bg)
+    .replace(/\{\{FG\}\}/g, fg);
+  const favBadge = fav ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;
+    background:#f59e0b;border:2px solid #fff;display:flex;align-items:center;justify-content:center;transform:rotate(45deg)">
+    <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff"><polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/></svg>
+    </div>` : "";
   return L.divIcon({
     className:"",
     html:`<div style="position:relative;width:${s}px;height:${s+8}px">
       <div style="width:${s}px;height:${s}px;background:${active?color:"#fff"};
         border:3px solid ${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);
         box-shadow:${active?`0 0 0 6px ${color}33,0 6px 22px ${color}77`:"0 3px 12px rgba(0,0,0,.2)"};
-        display:flex;align-items:center;justify-content:center;">
-        ${innerContent}
-      </div>
-      ${fav?`<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;
-        background:#f59e0b;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
-        font-size:8px;transform:rotate(45deg)">⭐</div>`:""}
+        display:flex;align-items:center;justify-content:center;">${inner}</div>
+      ${favBadge}
       <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
         width:${active?8:5}px;height:${active?8:5}px;border-radius:50%;
         background:${active?color:"#ccc"};box-shadow:${active?`0 0 8px ${color}`:"none"}"></div>
@@ -162,6 +192,7 @@ function pinIcon(type:EmType, active=false, fav=false): L.DivIcon {
     iconSize:[s,s+8],iconAnchor:[s/2,s+8],popupAnchor:[0,-s-8],
   });
 }
+
 function meIcon(): L.DivIcon {
   return L.divIcon({
     className:"",
@@ -169,14 +200,30 @@ function meIcon(): L.DivIcon {
       <div style="position:absolute;inset:-10px;border-radius:50%;background:#2563eb18;animation:em-pulse 2s infinite"></div>
       <div style="position:absolute;inset:-4px;border-radius:50%;background:#2563eb22;animation:em-pulse 2s .6s infinite"></div>
       <div style="width:24px;height:24px;background:#2563eb;border:3px solid #fff;border-radius:50%;
-        box-shadow:0 4px 14px #2563eb88;display:flex;align-items:center;justify-content:center;font-size:11px">📍</div>
+        box-shadow:0 4px 14px #2563eb88;display:flex;align-items:center;justify-content:center;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
     </div>`,
     iconSize:[24,24],iconAnchor:[12,12],
   });
 }
+
 function FlyTo({pos,zoom}:{pos:[number,number];zoom:number}){
   const map=useMap();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{map.flyTo(pos,zoom,{duration:1.2,easeLinearity:.3});},[pos[0],pos[1],zoom]);
+  return null;
+}
+
+function MapClickHandler({active,onPick}:{active:boolean;onPick:(pos:[number,number])=>void}){
+  const map=useMapEvents({
+    click(e){ if(active){ onPick([e.latlng.lat,e.latlng.lng]); } },
+    mousemove(){ if(active) map.getContainer().style.cursor="crosshair"; else map.getContainer().style.cursor=""; },
+  });
+  useEffect(()=>{ map.getContainer().style.cursor=active?"crosshair":""; return()=>{ map.getContainer().style.cursor=""; }; },[active,map]);
   return null;
 }
 
@@ -199,38 +246,30 @@ export default function EmergencyMap({lang,onBack}:Props){
   const [rl,        setRl]      = useState(false);
   const [flyTo,     setFlyTo]   = useState<{pos:[number,number];zoom:number}|null>(null);
   const [toast,     setToast]   = useState<{msg:string;ok:boolean}|null>(null);
+  const [pinMode,   setPinMode] = useState(false);
   const [voiceOn,   setVoice]   = useState(false);
   const [shareOpen, setShare]   = useState(false);
   const [activeType,setAT]      = useState<EmType|null>(null);
 
-  /* ── NEW: Search, radius, favorites ── */
-  const [searchQuery,   setSearchQuery]   = useState("");
-  const [searchRadius,  setSearchRadius]  = useState(8);
-  const [searchingGeo,  setSearchingGeo]  = useState(false);
-  const [geoResult,     setGeoResult]     = useState<{lat:number;lon:number;display:string}|null>(null);
-  const [favorites,     setFavorites]     = useState<Place[]>(() => {
+  const [searchQuery,  setSearchQuery]  = useState("");
+  const [searchRadius, setSearchRadius] = useState(8);
+  const [searchingGeo, setSearchingGeo] = useState(false);
+  const [geoResult,    setGeoResult]    = useState<{lat:number;lon:number;display:string}|null>(null);
+  const [favorites,    setFavorites]    = useState<Place[]>(() => {
     try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch { return []; }
   });
-  const [showFavs,      setShowFavs]      = useState(false);
+  const [showFavs, setShowFavs] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-
   const watchRef  = useRef<number|null>(null);
   const lastStep  = useRef(-1);
-  const remainRef = useRef("");
+  const [remainDist, setRemainDist] = useState("");
 
-  /* Persist favorites */
-  useEffect(()=>{
-    localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
-  },[favorites]);
+  useEffect(()=>{ localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); },[favorites]);
 
   const isFav = (id:string) => favorites.some(f=>f.id===id);
   const toggleFav = (place:Place, e?:React.MouseEvent) => {
     e?.stopPropagation();
-    setFavorites(prev =>
-      prev.some(f=>f.id===place.id)
-        ? prev.filter(f=>f.id!==place.id)
-        : [...prev, place]
-    );
+    setFavorites(prev => prev.some(f=>f.id===place.id) ? prev.filter(f=>f.id!==place.id) : [...prev, place]);
   };
 
   useEffect(()=>{
@@ -256,22 +295,27 @@ export default function EmergencyMap({lang,onBack}:Props){
     window.speechSynthesis.speak(u);
   },[voiceOn,isAr]);
 
+  const [accuracy, setAccuracy] = useState(0);
   const getGPS=():Promise<[number,number]>=>new Promise((res,rej)=>
-    navigator.geolocation.getCurrentPosition(p=>res([p.coords.latitude,p.coords.longitude]),rej,{enableHighAccuracy:true,timeout:12000})
+    navigator.geolocation.getCurrentPosition(
+      p=>{ setUserPos([p.coords.latitude,p.coords.longitude]); setAccuracy(p.coords.accuracy); res([p.coords.latitude,p.coords.longitude]); },
+      rej,
+      {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+    )
   );
 
-  /* GPS watch during nav */
   const startWatch=useCallback(()=>{
     if(watchRef.current!==null)return;
     watchRef.current=navigator.geolocation.watchPosition(p=>{
       const pos:[number,number]=[p.coords.latitude,p.coords.longitude];
       setUserPos(pos);
-      if(selected){const d=hav(pos,[selected.lat,selected.lon]);remainRef.current=fmtD(d);if(d<0.05)setArrived(true);}
+      if(selected){const d=hav(pos,[selected.lat,selected.lon]);setRemainDist(fmtD(d));if(d<0.05)setArrived(true);}
     },()=>{},{enableHighAccuracy:true,timeout:15000,maximumAge:3000});
   },[selected]);
   const stopWatch=useCallback(()=>{
     if(watchRef.current!==null){navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;}
   },[]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{if(panel==="nav")startWatch();else stopWatch();return stopWatch;},[panel]);
 
   useEffect(()=>{
@@ -282,73 +326,66 @@ export default function EmergencyMap({lang,onBack}:Props){
   },[navStep,panel,route,speak,isAr]);
   useEffect(()=>{
     if(arrived&&panel==="nav") speak(isAr?"وصلت إلى وجهتك!":"Vous êtes arrivé à destination!");
-  },[arrived,speak,isAr]);
+  },[arrived,speak,isAr,panel]);
 
-  /* Ensure OSM places — respects current searchRadius */
   const ensurePlaces=async(type:EmType,pos:[number,number],radius?:number):Promise<Place[]>=>{
     const r=radius??searchRadius;
-    /* Invalidate cache if radius changed */
     const cached=pool[type];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if(cached?.length && (cached as any)._radius===r) return cached;
     setLoading(l=>({...l,[type]:true}));
     const places=await fetchOSM(type,pos[0],pos[1],r);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (places as any)._radius=r;
     setPool(p=>({...p,[type]:places}));
     setLoading(l=>({...l,[type]:false}));
     return places;
   };
 
-  /* Radius change → clear pool → refetch active type */
   const handleRadiusChange = async (r:number) => {
     setSearchRadius(r);
-    setPool({});  // invalidate all cached results
+    setPool({});
     if(activeType && userPos){
       setLoading(l=>({...l,[activeType]:true}));
       const places=await fetchOSM(activeType,userPos[0],userPos[1],r);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (places as any)._radius=r;
       setPool({[activeType]:places});
       setLoading(l=>({...l,[activeType]:false}));
     }
   };
 
-  /* Free-text search: geocode → fly to location → fetch all types */
   const handleSearch = async () => {
     const q = searchQuery.trim();
     if (!q) return;
-    /* 1. Filter existing places first */
     const allLoaded = Object.values(pool).flat() as Place[];
     const filtered = allLoaded.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
     if (filtered.length) {
       await selectPlace(filtered[0]);
-      showToast(isAr?`🔍 ${filtered.length} نتيجة`:`🔍 ${filtered.length} résultat(s)`);
+      showToast(isAr?`${filtered.length} نتيجة`:`${filtered.length} résultat(s)`);
       return;
     }
-    /* 2. Geocode via Nominatim */
     setSearchingGeo(true);
-    showToast(isAr?"🔍 جاري البحث عن الموقع...":"🔍 Recherche de l'adresse...");
+    showToast(isAr?"جاري البحث عن الموقع...":"Recherche de l'adresse...");
     const geo = await geocodeNominatim(q);
     setSearchingGeo(false);
-    if (!geo) {
-      showToast(isAr?"⚠️ لم يُعثر على الموقع":"⚠️ Adresse introuvable", false);
-      return;
-    }
+    if (!geo) { showToast(isAr?"لم يُعثر على الموقع":"Adresse introuvable", false); return; }
     setGeoResult(geo);
     setFlyTo({pos:[geo.lat,geo.lon],zoom:15});
-    showToast(isAr?`📍 ${geo.display.substring(0,50)}...`:`📍 ${geo.display.substring(0,50)}...`);
+    showToast(geo.display.substring(0,60));
   };
 
-  /* Route calc */
   const doRoute=async(place:Place,pos:[number,number],mode:TMode=tmode)=>{
     setRl(true);setRoute(null);
     const r=await calcRoute(pos,[place.lat,place.lon],mode,isAr);
     setRoute(r);setRl(false);
     if(r){
       const min=mode==="car"?r.driveCar:r.driveWalk;
-      showToast(isAr?`✅ ${place.name} — ${r.distKm} كم (${min} د)`:`✅ ${place.name} — ${r.distKm} km (${min} min)`);
+      showToast(isAr?`${place.name} — ${r.distKm} كم (${min} د)`:`${place.name} — ${r.distKm} km (${min} min)`);
       speak(isAr?`${CFG[place.type].ar}: ${place.name}. ${r.distKm} كيلومتر، ${min} دقيقة`
                 :`${CFG[place.type].fr}: ${place.name}. ${r.distKm} km, ${min} min`);
     }else{
-      showToast(isAr?"⚠️ تعذّر حساب المسار — Google Maps متاح":"⚠️ Trajet indisponible",false);
+      showToast(isAr?"تعذّر حساب المسار — Google Maps متاح":"Trajet indisponible",false);
     }
   };
 
@@ -361,29 +398,30 @@ export default function EmergencyMap({lang,onBack}:Props){
 
   useEffect(()=>{
     if(!selected||!userPos)return;
-    setRl(true);setRoute(null);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setRl(true);
+    setRoute(null);
+    /* eslint-enable react-hooks/set-state-in-effect */
     doRoute(selected,userPos,tmode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[tmode,isAr]);
 
-  /* Main action: type button */
   const handleType=async(type:EmType)=>{
     setAT(type); setShowFavs(false);
     let pos=userPos;
     if(!pos){
       setLoc(true);
       try{pos=await getGPS();setUserPos(pos);setFlyTo({pos,zoom:14});}
-      catch{showToast(isAr?"❌ فعّل خدمة الموقع في المتصفح":"❌ Activez la géolocalisation",false);setLoc(false);return;}
+      catch{showToast(isAr?"فعّل خدمة الموقع في المتصفح":"Activez la géolocalisation",false);setLoc(false);return;}
       setLoc(false);
     }
-    showToast(isAr?`🔍 يبحث في نطاق ${searchRadius} كم...`:`🔍 Recherche dans ${searchRadius} km...`);
+    showToast(isAr?`يبحث في نطاق ${searchRadius} كم...`:`Recherche dans ${searchRadius} km...`);
     const places=await ensurePlaces(type,pos);
-    if(!places.length){showToast(isAr?`⚠️ لا توجد نتائج في نطاق ${searchRadius} كم`:`⚠️ Aucun résultat dans ${searchRadius} km`,false);return;}
+    if(!places.length){showToast(isAr?`لا توجد نتائج في نطاق ${searchRadius} كم`:`Aucun résultat dans ${searchRadius} km`,false);return;}
     const nearest=[...places].sort((a,b)=>hav(pos!,[a.lat,a.lon])-hav(pos!,[b.lat,b.lon]))[0];
     await selectPlace(nearest,pos);
   };
 
-  /* Filtered places for list view */
   const allPlaces = Object.values(pool).flat() as Place[];
   const filteredPlaces = searchQuery.trim()
     ? allPlaces.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -402,13 +440,20 @@ export default function EmergencyMap({lang,onBack}:Props){
         background:"#fff",borderBottom:"1.5px solid #e8eaed",
         display:"flex",alignItems:"center",gap:8,padding:"0 12px",
         boxShadow:"0 2px 18px rgba(0,0,0,.07)"}}>
+
         <button onClick={onBack} style={{width:36,height:36,borderRadius:10,border:"none",
-          background:"#f4f4f5",cursor:"pointer",fontSize:17,flexShrink:0,
-          display:"flex",alignItems:"center",justifyContent:"center"}}>{isAr?"→":"←"}</button>
+          background:"#f4f4f5",cursor:"pointer",flexShrink:0,color:"#555",
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {isAr?<ArrowRight size={18}/>:<ArrowLeft size={18}/>}
+        </button>
+
         <div style={{width:38,height:38,borderRadius:12,flexShrink:0,
           background:"linear-gradient(135deg,#991b1b,#dc2626)",
-          display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,
-          boxShadow:"0 4px 12px #dc262644"}}>🚨</div>
+          display:"flex",alignItems:"center",justifyContent:"center",
+          boxShadow:"0 4px 12px #dc262644"}}>
+          <AlertOctagon size={22} color="#fff" strokeWidth={2.5}/>
+        </div>
+
         <div style={{flex:1}}>
           <div style={{fontWeight:900,fontSize:14.5,color:"#111"}}>
             {isAr?"خريطة الطوارئ الذكية":"Urgences intelligentes"}
@@ -417,32 +462,54 @@ export default function EmergencyMap({lang,onBack}:Props){
             {isAr?"اضغط نوع الطوارئ للوصول الفوري":"Tapez un type pour naviguer immédiatement"}
           </div>
         </div>
+
+        {/* Voice button */}
         <button onClick={()=>setVoice(v=>!v)}
-          title={voiceOn?(isAr?`الصوت نشط — ${isAr?"عربي":"français"}`:`Voix active — ${isAr?"arabe":"français"}`):(isAr?"تفعيل الإرشاد الصوتي":"Activer la voix")}
-          style={{height:36,borderRadius:10,cursor:"pointer",padding:"0 8px",
-            flexShrink:0,border:`1.5px solid ${voiceOn?"#dc2626":"#e8e8e8"}`,
+          title={voiceOn?(isAr?"الصوت نشط":"Voix active"):(isAr?"تفعيل الصوت":"Activer la voix")}
+          style={{height:36,borderRadius:10,cursor:"pointer",padding:"0 10px",flexShrink:0,
+            border:`1.5px solid ${voiceOn?"#dc2626":"#e8e8e8"}`,
             background:voiceOn?"#fee2e2":"#fff",color:voiceOn?"#dc2626":"#bbb",
-            display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
-          <span style={{fontSize:17}}>🔊</span>
-          {voiceOn&&<span style={{fontSize:10,fontWeight:900,lineHeight:1}}>
-            {isAr?"ع":"FR"}
-          </span>}
+            display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+          {voiceOn?<Volume2 size={17}/>:<VolumeX size={17}/>}
+          {voiceOn&&<span style={{fontSize:10,fontWeight:900,lineHeight:1}}>{isAr?"ع":"FR"}</span>}
         </button>
+
+        {/* Share button */}
         <button onClick={()=>setShare(v=>!v)} style={{width:36,height:36,borderRadius:10,
-          border:"1.5px solid #e8e8e8",background:"#fff",cursor:"pointer",fontSize:17,flexShrink:0,
-          display:"flex",alignItems:"center",justifyContent:"center"}}>📤</button>
+          border:"1.5px solid #e8e8e8",background:"#fff",cursor:"pointer",color:"#555",flexShrink:0,
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Share2 size={17}/>
+        </button>
+
+        {/* Locate button */}
         <button onClick={async()=>{
           setLoc(true);
-          try{const p=await getGPS();setUserPos(p);setFlyTo({pos:p,zoom:14});setPool({});
-            showToast(isAr?"📍 تم تحديث موقعك":"📍 Position mise à jour");
-          }catch{showToast(isAr?"❌ تعذّر التحديد":"❌ Erreur",false);}
+          showToast(isAr?"جاري تحديد موقعك...":"Localisation...","info" as never);
+          try{const p=await getGPS();setUserPos(p);setFlyTo({pos:p,zoom:16});setPool({});
+            setAccuracy(acc=>{
+              const msg=acc<50?(isAr?`دقة ±${Math.round(acc)} م`:`Précision ±${Math.round(acc)} m`):acc<200?(isAr?`تقريبي ±${Math.round(acc)} م`:`Approx. ±${Math.round(acc)} m`):(isAr?`دقة ضعيفة ±${Math.round(acc)} م`:`Faible ±${Math.round(acc)} m`);
+              setTimeout(()=>showToast(isAr?`تم تحديد موقعك — ${msg}`:`Localisé — ${msg}`,acc<200),0);
+              return acc;
+            });
+          }catch{showToast(isAr?"فعّل إذن الموقع في المتصفح":"Autorisez la géolocalisation",false);}
           setLoc(false);
         }} style={{display:"flex",alignItems:"center",gap:6,padding:"0 14px",height:36,borderRadius:10,
           border:"none",color:"#fff",cursor:"pointer",fontFamily:"inherit",fontWeight:800,fontSize:12,flexShrink:0,
           background:userPos?"linear-gradient(135deg,#16a34a,#22c55e)":"linear-gradient(135deg,#1d4ed8,#3b82f6)",
           boxShadow:"0 3px 12px rgba(0,0,0,.18)"}}>
-          {locating?<span style={{animation:"em-spin .8s linear infinite",display:"inline-block"}}>⏳</span>:"📍"}
+          {locating
+            ? <Loader2 size={15} style={{animation:"em-spin .8s linear infinite"}}/>
+            : <MapPin size={15}/>}
           {isAr?(userPos?"تحديث":"تحديد موقعي"):(userPos?"Actualiser":"Localiser")}
+        </button>
+
+        {/* Manual pin button */}
+        <button onClick={()=>setPinMode(v=>!v)}
+          title={isAr?"ضع موقعك يدوياً على الخريطة":"Placer manuellement sur la carte"}
+          style={{width:36,height:36,borderRadius:10,border:`2px solid ${pinMode?"#1d4ed8":"#e8e8e8"}`,
+            background:pinMode?"#eff6ff":"#fff",cursor:"pointer",color:pinMode?"#1d4ed8":"#555",flexShrink:0,
+            display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
+          <Crosshair size={17}/>
         </button>
       </div>
 
@@ -452,10 +519,20 @@ export default function EmergencyMap({lang,onBack}:Props){
           style={{width:"100%",height:"100%"}} zoomControl={false} attributionControl={false}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
           {flyTo&&<FlyTo pos={flyTo.pos} zoom={flyTo.zoom}/>}
-          {userPos&&<Marker position={userPos} icon={meIcon()}>
-            <Popup><b style={{fontFamily:"Cairo,sans-serif"}}>{isAr?"موقعك الحالي":"Votre position"}</b></Popup>
-          </Marker>}
-          {/* Geocode result pin */}
+          <MapClickHandler active={pinMode} onPick={pos=>{
+            setUserPos(pos); setAccuracy(0); setPinMode(false);
+            setFlyTo({pos,zoom:16}); setPool({});
+            showToast(isAr?"✅ تم تحديد موقعك يدوياً":"✅ Position définie manuellement");
+          }}/>
+          {userPos&&<>
+            {accuracy>0&&<Circle center={userPos} radius={accuracy} pathOptions={{color:"#2563eb",fillColor:"#2563eb",fillOpacity:.06,weight:1.5,dashArray:"4,4"}}/>}
+            <Marker position={userPos} icon={meIcon()}>
+              <Popup>
+                <b style={{fontFamily:"Cairo,sans-serif"}}>{isAr?"موقعك الحالي":"Votre position"}</b>
+                {accuracy>0&&<div style={{fontFamily:"Cairo,sans-serif",fontSize:11,color:"#888",marginTop:3}}>{isAr?`دقة: ±${Math.round(accuracy)} م`:`Précision: ±${Math.round(accuracy)} m`}</div>}
+              </Popup>
+            </Marker>
+          </>}
           {geoResult&&<Marker position={[geoResult.lat,geoResult.lon]} icon={meIcon()}>
             <Popup><div style={{fontFamily:"Cairo,sans-serif",fontSize:12}}>{geoResult.display.substring(0,80)}</div></Popup>
           </Marker>}
@@ -467,27 +544,37 @@ export default function EmergencyMap({lang,onBack}:Props){
             <Marker key={p.id} position={[p.lat,p.lon]} icon={pinIcon(p.type,selected?.id===p.id,isFav(p.id))}>
               <Popup>
                 <div style={{fontFamily:"Cairo,sans-serif",direction:"rtl",minWidth:190,padding:"4px 0"}}>
-                  <div style={{fontWeight:900,fontSize:13.5,color:CFG[p.type].color,marginBottom:5}}>
-                    {CFG[p.type].icon} {p.name}
+                  <div style={{fontWeight:900,fontSize:13.5,color:CFG[p.type].color,marginBottom:5,
+                    display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{color:CFG[p.type].color}}>{TYPE_ICON[p.type]}</span> {p.name}
                   </div>
-                  {p.address&&<div style={{fontSize:11.5,color:"#666",marginBottom:6}}>📍 {p.address}</div>}
-                  {userPos&&<div style={{fontSize:12.5,fontWeight:800,color:"#16a34a",marginBottom:8}}>
-                    📏 {fmtD(hav(userPos,[p.lat,p.lon]))}
+                  {p.address&&<div style={{fontSize:11.5,color:"#666",marginBottom:6,display:"flex",gap:4,alignItems:"center"}}>
+                    <MapPin size={11} color="#999"/>{p.address}
+                  </div>}
+                  {userPos&&<div style={{fontSize:12.5,fontWeight:800,color:"#16a34a",marginBottom:8,
+                    display:"flex",gap:4,alignItems:"center"}}>
+                    <Ruler size={12} color="#16a34a"/>{fmtD(hav(userPos,[p.lat,p.lon]))}
                   </div>}
                   {p.is_24h&&<span style={{background:"#f0fdf4",color:"#16a34a",fontSize:10,fontWeight:700,
                     padding:"2px 8px",borderRadius:20,border:"1px solid #bbf7d0",
-                    marginBottom:8,display:"inline-block"}}>✅ 24/24</span>}
+                    marginBottom:8,display:"inline-flex",alignItems:"center",gap:3}}>
+                    <CheckCircle2 size={10}/> 24/24
+                  </span>}
                   <div style={{display:"flex",gap:6,marginTop:8}}>
                     {p.phone&&<a href={`tel:${p.phone}`} style={{flex:1,padding:"8px",background:"#16a34a",
-                      color:"#fff",borderRadius:9,textAlign:"center",textDecoration:"none",fontWeight:800,fontSize:12}}>📞</a>}
+                      color:"#fff",borderRadius:9,textAlign:"center",textDecoration:"none",fontWeight:800,fontSize:12,
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <Phone size={14}/>
+                    </a>}
                     <button onClick={()=>toggleFav(p)} style={{width:36,padding:"8px",
                       background:isFav(p.id)?"#fef3c7":"#f9f9f9",border:"1.5px solid #f59e0b",
-                      borderRadius:9,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>
-                      {isFav(p.id)?"⭐":"☆"}
+                      borderRadius:9,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>
+                      <Star size={14} fill={isFav(p.id)?"#f59e0b":"none"} color="#f59e0b"/>
                     </button>
                     <button onClick={()=>selectPlace(p)} style={{flex:2,padding:"8px",background:CFG[p.type].color,
-                      color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontSize:12,fontFamily:"inherit"}}>
-                      🧭 {isAr?"ابدأ التنقل":"Naviguer"}
+                      color:"#fff",border:"none",borderRadius:9,cursor:"pointer",fontWeight:800,fontSize:12,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                      <Navigation size={13}/> {isAr?"ابدأ":"Naviguer"}
                     </button>
                   </div>
                 </div>
@@ -520,29 +607,36 @@ export default function EmergencyMap({lang,onBack}:Props){
                   background:"#fafafa",transition:"all .15s",boxSizing:"border-box"}}
               />
               <span style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
-                [isAr?"right":"left"]:11,fontSize:15,color:"#bbb",pointerEvents:"none"}}>🔍</span>
+                [isAr?"right":"left"]:11,color:"#bbb",pointerEvents:"none",display:"flex",alignItems:"center"}}>
+                <Search size={15}/>
+              </span>
               {searchQuery&&(
                 <button onClick={()=>{setSearchQuery("");setGeoResult(null);searchRef.current?.focus();}}
                   style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
                     [isAr?"left":"right"]:8,background:"none",border:"none",
-                    cursor:"pointer",color:"#aaa",fontSize:14,lineHeight:1,padding:2}}>✕</button>
+                    cursor:"pointer",color:"#aaa",lineHeight:1,padding:2,
+                    display:"flex",alignItems:"center"}}>
+                  <X size={14}/>
+                </button>
               )}
             </div>
             <button onClick={handleSearch} disabled={!searchQuery.trim()||searchingGeo}
               style={{width:38,height:38,borderRadius:11,border:"none",flexShrink:0,
                 background:searchQuery.trim()?"#1d4ed8":"#e5e7eb",
-                color:"#fff",cursor:searchQuery.trim()?"pointer":"not-allowed",fontSize:14,
+                color:"#fff",cursor:searchQuery.trim()?"pointer":"not-allowed",
                 display:"flex",alignItems:"center",justifyContent:"center",transition:"background .15s"}}>
-              {searchingGeo?<span style={{animation:"em-spin .8s linear infinite",display:"inline-block",fontSize:12}}>⏳</span>:"→"}
+              {searchingGeo
+                ? <Loader2 size={15} style={{animation:"em-spin .8s linear infinite"}}/>
+                : isAr?<ArrowLeft size={16}/>:<ArrowRight size={16}/>}
             </button>
           </div>
 
-          {/* ── Distance radius filter ── */}
+          {/* ── Radius filter ── */}
           <div style={{background:"#f8f9fb",borderRadius:12,padding:"9px 12px",marginBottom:8,
             border:"1.5px solid #eaeaea"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-              <span style={{fontSize:11.5,fontWeight:700,color:"#555"}}>
-                📡 {isAr?"نطاق البحث":"Rayon de recherche"}
+              <span style={{fontSize:11.5,fontWeight:700,color:"#555",display:"flex",alignItems:"center",gap:5}}>
+                <Radio size={13} color="#555"/> {isAr?"نطاق البحث":"Rayon de recherche"}
               </span>
               <span style={{fontSize:12,fontWeight:900,color:"#1d4ed8",background:"#eff6ff",
                 padding:"2px 10px",borderRadius:20,border:"1px solid #bfdbfe"}}>
@@ -578,19 +672,19 @@ export default function EmergencyMap({lang,onBack}:Props){
                     background:isA?c.color:"#fafafa",cursor:"pointer",fontFamily:"inherit",
                     transition:"all .18s",boxShadow:isA?`0 4px 18px ${c.color}55`:"0 2px 8px rgba(0,0,0,.04)",
                     textAlign:"start"}}>
-                  {t==="hospital"||t==="pharmacy"
-                    ? <span style={{flexShrink:0,width:28,height:28,borderRadius:8,
-                        background:isA?"rgba(255,255,255,0.25)":c.color,
-                        display:"inline-flex",alignItems:"center",justifyContent:"center"}}
-                        dangerouslySetInnerHTML={{__html:`<svg viewBox="0 0 40 40" width="18" height="18"><rect x="17" y="6" width="6" height="28" rx="3" fill="${isA?c.color:"#fff"}"/><rect x="6" y="17" width="28" height="6" rx="3" fill="${isA?c.color:"#fff"}"/></svg>`}}/>
-                    : <span style={{fontSize:24,flexShrink:0}}>{c.icon}</span>
-                  }
+                  <span style={{flexShrink:0,width:28,height:28,borderRadius:8,
+                    background:isA?"rgba(255,255,255,0.25)":c.color,
+                    display:"inline-flex",alignItems:"center",justifyContent:"center",
+                    color:isA?c.color:"#fff"}}>
+                    {TYPE_ICON[t]}
+                  </span>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:11.5,fontWeight:800,color:isA?"#fff":"#111",
                       overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{isAr?c.ar:c.fr}</div>
                     {loading[t]?(
-                      <div style={{fontSize:9.5,color:isA?"rgba(255,255,255,.8)":"#aaa",marginTop:2}}>
-                        <span style={{animation:"em-spin .8s linear infinite",display:"inline-block"}}>⏳</span>
+                      <div style={{fontSize:9.5,color:isA?"rgba(255,255,255,.8)":"#aaa",marginTop:2,
+                        display:"flex",alignItems:"center",gap:3}}>
+                        <Loader2 size={9} style={{animation:"em-spin .8s linear infinite"}}/>
                         {isAr?" يبحث...":" Recherche..."}
                       </div>
                     ):near&&userPos?(
@@ -617,9 +711,11 @@ export default function EmergencyMap({lang,onBack}:Props){
                 color:"#92400e",fontWeight:700,fontSize:12,cursor:"pointer",
                 fontFamily:"inherit",display:"flex",alignItems:"center",gap:8,
                 transition:"all .15s"}}>
-              <span style={{fontSize:16}}>⭐</span>
+              <Star size={15} fill="#f59e0b" color="#f59e0b"/>
               <span>{isAr?`المفضلة (${favorites.length})`:`Favoris (${favorites.length})`}</span>
-              <span style={{marginInlineStart:"auto",fontSize:14}}>{showFavs?"▲":"▼"}</span>
+              <span style={{marginInlineStart:"auto",display:"flex",alignItems:"center"}}>
+                {showFavs?<ChevronUp size={15}/>:<ChevronDown size={15}/>}
+              </span>
             </button>
           )}
         </div>
@@ -637,7 +733,7 @@ export default function EmergencyMap({lang,onBack}:Props){
                     border:"1.5px solid #fde68a",borderRadius:12,marginBottom:6,
                     background:"#fff",cursor:"pointer",transition:"all .15s"}}
                   onClick={()=>selectPlace(p)}>
-                  <span style={{fontSize:22,flexShrink:0}}>{c.icon}</span>
+                  <span style={{color:c.color,flexShrink:0}}>{TYPE_ICON[p.type]}</span>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:800,color:"#111",
                       overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
@@ -647,19 +743,23 @@ export default function EmergencyMap({lang,onBack}:Props){
                   </div>
                   <button className="em-fav-btn" onClick={e=>toggleFav(p,e)}
                     style={{width:28,height:28,borderRadius:8,border:"none",background:"#fef3c7",
-                      cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",
-                      transition:"transform .15s",flexShrink:0}}>⭐</button>
+                      cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                      transition:"transform .15s",flexShrink:0}}>
+                    <Star size={13} fill="#f59e0b" color="#f59e0b"/>
+                  </button>
                 </div>
               );
             })}
           </div>
         )}
 
-        {/* ── CTA / nearest list ── */}
+        {/* ── CTA (no GPS yet) ── */}
         {!userPos&&!showFavs&&(
           <div style={{margin:"0 10px 10px",background:"linear-gradient(150deg,#7f1d1d,#dc2626)",
             borderRadius:16,padding:"18px 14px",textAlign:"center",flexShrink:0}}>
-            <div style={{fontSize:36,marginBottom:8}}>🆘</div>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
+              <AlertOctagon size={44} color="rgba(255,255,255,.9)" strokeWidth={1.5}/>
+            </div>
             <div style={{color:"#fff",fontWeight:900,fontSize:13,lineHeight:1.5}}>
               {isAr?"اضغط على نوع الطوارئ":"Tapez un type d'urgence"}
             </div>
@@ -670,9 +770,9 @@ export default function EmergencyMap({lang,onBack}:Props){
           </div>
         )}
 
+        {/* ── Nearest list ── */}
         {userPos&&!showFavs&&(
           <div style={{flex:1,overflowY:"auto",padding:"0 10px 10px"}}>
-            {/* Search results when query active */}
             {searchQuery.trim()&&filteredPlaces.length>0&&(
               <div style={{marginBottom:10,padding:"6px 10px",background:"#eff6ff",
                 borderRadius:10,fontSize:11,color:"#1d4ed8",fontWeight:700,
@@ -680,7 +780,6 @@ export default function EmergencyMap({lang,onBack}:Props){
                 {isAr?`${filteredPlaces.length} نتيجة`:`${filteredPlaces.length} résultat(s)`}
               </div>
             )}
-            {/* Display: filtered if searching, else nearest per type */}
             {searchQuery.trim()
               ? filteredPlaces.slice(0,8).map(p=>{
                   const c=CFG[p.type]; const d=hav(userPos,[p.lat,p.lon]); const isSel=selected?.id===p.id;
@@ -718,44 +817,54 @@ export default function EmergencyMap({lang,onBack}:Props){
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
                   <button onClick={()=>{setSel(null);setPanel("list");setRoute(null);}}
                     style={{width:30,height:30,borderRadius:9,border:"none",
-                      background:"rgba(255,255,255,.22)",color:"#fff",cursor:"pointer",fontSize:14,
-                      display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                      background:"rgba(255,255,255,.22)",color:"#fff",cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <X size={16}/>
+                  </button>
                   <span style={{flex:1,fontSize:10.5,opacity:.8,fontWeight:700}}>
                     {isAr?`${cfg.ar} — تفاصيل`:`${cfg.fr} — Détails`}
                   </span>
-                  {/* Favorite button in detail panel */}
                   <button onClick={()=>toggleFav(selected)}
                     style={{width:30,height:30,borderRadius:9,
                       background:isFav(selected.id)?"rgba(245,158,11,.3)":"rgba(255,255,255,.2)",
                       border:`1.5px solid ${isFav(selected.id)?"#f59e0b":"rgba(255,255,255,.3)"}`,
-                      color:"#fff",cursor:"pointer",fontSize:16,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      transition:"all .15s"}}>
-                    {isFav(selected.id)?"⭐":"☆"}
+                      color:"#fff",cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}}>
+                    <Star size={15} fill={isFav(selected.id)?"#f59e0b":"none"} color="#fff"/>
                   </button>
                   <a href={gmaps(userPos,[selected.lat,selected.lon])} target="_blank" rel="noopener noreferrer"
                     style={{width:30,height:30,borderRadius:9,background:"rgba(255,255,255,.2)",
-                      color:"#fff",textDecoration:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🗺</a>
+                      color:"#fff",textDecoration:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Map size={15}/>
+                  </a>
                 </div>
                 <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:14}}>
                   <div style={{width:54,height:54,borderRadius:16,background:"rgba(255,255,255,.22)",
-                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0,
-                    border:"2px solid rgba(255,255,255,.3)"}}>{cfg.icon}</div>
+                    display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+                    border:"2px solid rgba(255,255,255,.3)",color:"#fff"}}>
+                    {selected.type==="hospital"?<Building2 size={28}/>
+                    :selected.type==="police"?<ShieldCheck size={28}/>
+                    :selected.type==="civil_protection"?<Flame size={28}/>
+                    :<Pill size={28}/>}
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:900,fontSize:15.5,lineHeight:1.35}}>{selected.name}</div>
                     <div style={{fontSize:11.5,opacity:.8,marginTop:3}}>{isAr?cfg.ar:cfg.fr}</div>
-                    {selected.is_24h&&<span style={{display:"inline-block",marginTop:5,background:"rgba(74,222,128,.22)",color:"#86efac",
-                      fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>✅ 24/24</span>}
+                    {selected.is_24h&&<span style={{display:"inline-flex",marginTop:5,alignItems:"center",gap:4,
+                      background:"rgba(74,222,128,.22)",color:"#86efac",
+                      fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20}}>
+                      <CheckCircle2 size={10}/> 24/24
+                    </span>}
                   </div>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7}}>
                   {[
-                    {icon:"📏",val:route?`${route.distKm} كم`:userPos?fmtD(hav(userPos,[selected.lat,selected.lon])):"—",label:isAr?"المسافة":"Distance"},
-                    {icon:"⏱",val:rl?"⏳":route?`${tMin(route)} د`:"—",label:isAr?"الوقت":"Durée"},
-                    {icon:tmode==="car"?"🚗":"🚶",val:tmode==="car"?(isAr?"سيارة":"Voiture"):(isAr?"مشياً":"À pied"),label:isAr?"الوسيلة":"Mode"},
+                    {icon:<Ruler size={16} color="#fff"/>,val:route?`${route.distKm} كم`:userPos?fmtD(hav(userPos,[selected.lat,selected.lon])):"—",label:isAr?"المسافة":"Distance"},
+                    {icon:rl?<Loader2 size={16} color="#fff" style={{animation:"em-spin .8s linear infinite"}}/>:<Clock size={16} color="#fff"/>,val:rl?"...":route?`${tMin(route)} د`:"—",label:isAr?"الوقت":"Durée"},
+                    {icon:tmode==="car"?<Car size={16} color="#fff"/>:<PersonStanding size={16} color="#fff"/>,val:tmode==="car"?(isAr?"سيارة":"Voiture"):(isAr?"مشياً":"À pied"),label:isAr?"الوسيلة":"Mode"},
                   ].map((s,i)=>(
                     <div key={i} style={{background:"rgba(255,255,255,.18)",borderRadius:12,padding:"9px 6px",textAlign:"center"}}>
-                      <div style={{fontSize:16}}>{s.icon}</div>
+                      <div style={{display:"flex",justifyContent:"center"}}>{s.icon}</div>
                       <div style={{fontWeight:900,fontSize:14,marginTop:2}}>{s.val}</div>
                       <div style={{fontSize:9.5,opacity:.8,marginTop:1}}>{s.label}</div>
                     </div>
@@ -763,6 +872,7 @@ export default function EmergencyMap({lang,onBack}:Props){
                 </div>
               </div>
 
+              {/* Transport mode */}
               <div style={{display:"flex",gap:6,padding:"10px 12px",background:"#fafafa",borderBottom:"1px solid #eee",flexShrink:0}}>
                 {(["car","walk"] as TMode[]).map(m=>(
                   <button key={m} onClick={()=>setTmode(m)}
@@ -771,8 +881,10 @@ export default function EmergencyMap({lang,onBack}:Props){
                       background:tmode===m?`${cfg.color}18`:"transparent",
                       color:tmode===m?cfg.color:"#aaa",fontWeight:800,fontSize:11.5,
                       cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
-                    <div style={{fontSize:20}}>{m==="car"?"🚗":"🚶"}</div>
-                    <div style={{fontSize:11,marginTop:2,fontWeight:900}}>
+                    <div style={{display:"flex",justifyContent:"center",marginBottom:2}}>
+                      {m==="car"?<Car size={20}/>:<PersonStanding size={20}/>}
+                    </div>
+                    <div style={{fontSize:11,fontWeight:900}}>
                       {route?(m==="car"?route.driveCar:route.driveWalk)+`${isAr?" د":" min"}`:"—"}
                     </div>
                     <div style={{fontSize:9.5,opacity:.7}}>{m==="car"?(isAr?"سيارة":"Voiture"):(isAr?"مشياً":"À pied")}</div>
@@ -781,12 +893,12 @@ export default function EmergencyMap({lang,onBack}:Props){
               </div>
 
               <div style={{flex:1,overflowY:"auto",padding:"12px"}}>
-                {selected.address&&<IRow icon="📍" bg="#f8f9fa" label={isAr?"العنوان":"Adresse"}>
+                {selected.address&&<IRow icon={<MapPin size={18}/>} bg="#f8f9fa" label={isAr?"العنوان":"Adresse"}>
                   <span style={{fontSize:12.5,color:"#222",lineHeight:1.5}}>{selected.address}</span>
                 </IRow>}
                 {selected.phone&&(
                   <a href={`tel:${selected.phone}`} style={{display:"block",textDecoration:"none"}}>
-                    <IRow icon="📞" bg="#f0fdf4" label={isAr?"اتصال مباشر":"Appel direct"}>
+                    <IRow icon={<Phone size={18}/>} bg="#f0fdf4" label={isAr?"اتصال مباشر":"Appel direct"}>
                       <span style={{fontSize:15,color:"#16a34a",fontWeight:900}}>{selected.phone}</span>
                     </IRow>
                   </a>
@@ -795,7 +907,7 @@ export default function EmergencyMap({lang,onBack}:Props){
                   <div style={{background:"#f8f9fa",borderRadius:14,overflow:"hidden",border:"1.5px solid #eee"}}>
                     <div style={{padding:"11px 14px",fontWeight:800,fontSize:12.5,color:"#111",
                       display:"flex",alignItems:"center",gap:6}}>
-                      🗺 {isAr?`خطوات الطريق (${route.steps.length})`:`Étapes (${route.steps.length})`}
+                      <Map size={14}/> {isAr?`خطوات الطريق (${route.steps.length})`:`Étapes (${route.steps.length})`}
                     </div>
                     {route.steps.map((s,i)=>(
                       <div key={i} style={{display:"flex",gap:9,padding:"9px 14px",
@@ -818,12 +930,12 @@ export default function EmergencyMap({lang,onBack}:Props){
                   <div style={{width:"100%",padding:"14px",borderRadius:13,background:"#f3f4f6",
                     color:"#9ca3af",fontWeight:800,fontSize:13,textAlign:"center",
                     display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                    <span style={{animation:"em-spin .8s linear infinite",display:"inline-block"}}>⏳</span>
+                    <Loader2 size={16} style={{animation:"em-spin .8s linear infinite"}}/>
                     {isAr?"جاري حساب المسار...":"Calcul de l'itinéraire..."}
                   </div>
                 ):(
                   <button onClick={()=>{
-                    if(!route){showToast(isAr?"⚠️ المسار غير متاح":"⚠️ Itinéraire indisponible",false);return;}
+                    if(!route){showToast(isAr?"المسار غير متاح":"Itinéraire indisponible",false);return;}
                     setPanel("nav");setNavStep(0);lastStep.current=-1;
                     if(userPos)setFlyTo({pos:userPos,zoom:16});
                     speak(isAr?`تم تشغيل الملاحة نحو ${selected.name}. المسافة ${route.distKm} كيلومتر`
@@ -834,11 +946,12 @@ export default function EmergencyMap({lang,onBack}:Props){
                     cursor:route?"pointer":"not-allowed",fontFamily:"inherit",
                     display:"flex",alignItems:"center",justifyContent:"center",gap:12,
                     boxShadow:route?`0 5px 22px ${cfg.color}44`:"none",transition:"all .2s"}}>
-                    <span style={{fontSize:22}}>🧭</span>
+                    <Navigation size={22}/>
                     <div style={{textAlign:"start"}}>
                       <div>{isAr?"ابدأ التنقل خطوة بخطوة":"Démarrer la navigation"}</div>
-                      {route&&<div style={{fontSize:11,opacity:.85,fontWeight:600,marginTop:1}}>
-                        {route.distKm} {isAr?"كم":"km"} · {tMin(route)} {isAr?"دقيقة":"min"} · {tmode==="car"?"🚗":"🚶"}
+                      {route&&<div style={{fontSize:11,opacity:.85,fontWeight:600,marginTop:1,display:"flex",alignItems:"center",gap:6}}>
+                        {route.distKm} {isAr?"كم":"km"} · {tMin(route)} {isAr?"دقيقة":"min"} ·
+                        {tmode==="car"?<Car size={11}/>:<PersonStanding size={11}/>}
                       </div>}
                     </div>
                   </button>
@@ -852,25 +965,31 @@ export default function EmergencyMap({lang,onBack}:Props){
             <div style={{display:"flex",flexDirection:"column",height:"100%",animation:"em-in .2s ease"}}>
               <div style={{background:arrived?"#16a34a":cfg.color,padding:"14px",color:"#fff",flexShrink:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                  <span style={{fontSize:11.5,opacity:.85,fontWeight:700}}>
-                    {arrived?(isAr?"🎉 وصلت!":"🎉 Arrivé!"):`🧭 ${isAr?"الملاحة نشطة":"Navigation active"}`}
+                  <span style={{fontSize:11.5,opacity:.85,fontWeight:700,display:"flex",alignItems:"center",gap:5}}>
+                    {arrived
+                      ? <><PartyPopper size={14}/> {isAr?"وصلت!":"Arrivé!"}</>
+                      : <><Navigation size={13}/> {isAr?"الملاحة نشطة":"Navigation active"}</>
+                    }
                   </span>
                   <div style={{flex:1}}/>
                   <button onClick={()=>{stopWatch();setPanel("detail");window.speechSynthesis?.cancel();}}
                     style={{padding:"4px 12px",borderRadius:8,border:"none",
                       background:"rgba(255,255,255,.22)",color:"#fff",cursor:"pointer",
-                      fontSize:11,fontWeight:700,fontFamily:"inherit"}}>
-                    ⏹ {isAr?"إيقاف":"Arrêter"}
+                      fontSize:11,fontWeight:700,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",gap:5}}>
+                    <Square size={11}/> {isAr?"إيقاف":"Arrêter"}
                   </button>
                   <button onClick={()=>userPos&&setFlyTo({pos:userPos,zoom:16})}
                     style={{width:28,height:28,borderRadius:8,border:"none",background:"rgba(255,255,255,.18)",
-                      color:"#fff",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>🎯</button>
+                      color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Crosshair size={14}/>
+                  </button>
                 </div>
                 <div style={{fontWeight:900,fontSize:15,marginBottom:12}}>{selected.name}</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   <div style={{background:"rgba(255,255,255,.2)",borderRadius:12,padding:"10px 12px"}}>
                     <div style={{fontSize:9.5,opacity:.8,marginBottom:2}}>{isAr?"المتبقي":"Restant"}</div>
-                    <div style={{fontWeight:900,fontSize:21}}>{remainRef.current||route.distKm+" كم"}</div>
+                    <div style={{fontWeight:900,fontSize:21}}>{remainDist||route.distKm+" كم"}</div>
                   </div>
                   <div style={{background:"rgba(255,255,255,.2)",borderRadius:12,padding:"10px 12px"}}>
                     <div style={{fontSize:9.5,opacity:.8,marginBottom:2}}>{isAr?"الوقت":"Durée"}</div>
@@ -905,15 +1024,17 @@ export default function EmergencyMap({lang,onBack}:Props){
                     <button disabled={navStep===0} onClick={()=>setNavStep(s=>s-1)}
                       style={{flex:1,padding:"10px",border:"1.5px solid #e0e0e0",borderRadius:11,
                         background:navStep===0?"#f5f5f5":"#fff",color:navStep===0?"#ccc":"#333",
-                        cursor:navStep===0?"not-allowed":"pointer",fontWeight:800,fontSize:13,fontFamily:"inherit"}}>
-                      {isAr?"▶ السابق":"◀ Préc."}
+                        cursor:navStep===0?"not-allowed":"pointer",fontWeight:800,fontSize:13,fontFamily:"inherit",
+                        display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                      {isAr?<><ChevronRight size={14}/>{isAr?"السابق":"Préc."}</>:<><ChevronLeft size={14}/> Préc.</>}
                     </button>
                     <button disabled={navStep>=route.steps.length-1} onClick={()=>setNavStep(s=>s+1)}
                       style={{flex:1,padding:"10px",border:"none",borderRadius:11,
                         background:navStep>=route.steps.length-1?"#ddd":cfg.color,
                         color:"#fff",cursor:navStep>=route.steps.length-1?"not-allowed":"pointer",
-                        fontWeight:800,fontSize:13,fontFamily:"inherit"}}>
-                      {isAr?"◀ التالي":"Suiv. ▶"}
+                        fontWeight:800,fontSize:13,fontFamily:"inherit",
+                        display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                      {isAr?<>{isAr?"التالي":"Suiv."}<ChevronLeft size={14}/></>:<>Suiv. <ChevronRight size={14}/></>}
                     </button>
                   </div>
                   <div style={{flex:1,overflowY:"auto"}}>
@@ -926,7 +1047,7 @@ export default function EmergencyMap({lang,onBack}:Props){
                           background:i===navStep?cfg.color:i<navStep?"#16a34a":"#e5e7eb",
                           color:"#fff",fontWeight:900,fontSize:10,
                           display:"flex",alignItems:"center",justifyContent:"center"}}>
-                          {i<navStep?"✓":i+1}
+                          {i<navStep?<CheckCircle2 size={12}/>:i+1}
                         </div>
                         <div style={{flex:1}}>
                           <div style={{fontSize:12,fontWeight:700,color:i===navStep?cfg.color:"#333"}}>{s.text||"استمر"}</div>
@@ -940,14 +1061,14 @@ export default function EmergencyMap({lang,onBack}:Props){
                       style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,
                         padding:"13px",background:cfg.color,color:"#fff",textDecoration:"none",
                         fontWeight:900,fontSize:13,flexShrink:0}}>
-                      📞 {isAr?`اتصل: ${selected.phone}`:`Appeler: ${selected.phone}`}
+                      <Phone size={16}/> {isAr?`اتصل: ${selected.phone}`:`Appeler: ${selected.phone}`}
                     </a>
                   )}
                 </>
               ):(
                 <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",
                   justifyContent:"center",padding:28,textAlign:"center",animation:"em-pop .5s ease"}}>
-                  <div style={{fontSize:68}}>🎉</div>
+                  <PartyPopper size={64} color={cfg.color} strokeWidth={1.5}/>
                   <div style={{fontWeight:900,fontSize:21,color:cfg.color,marginTop:10}}>
                     {isAr?"وصلت إلى وجهتك!":"Vous êtes arrivé!"}
                   </div>
@@ -956,7 +1077,7 @@ export default function EmergencyMap({lang,onBack}:Props){
                     <a href={`tel:${selected.phone}`}
                       style={{marginTop:18,display:"flex",alignItems:"center",gap:9,padding:"13px 26px",
                         background:cfg.color,color:"#fff",borderRadius:14,textDecoration:"none",fontWeight:800,fontSize:13}}>
-                      📞 {isAr?"اتصل بهم الآن":"Les appeler maintenant"}
+                      <Phone size={16}/> {isAr?"اتصل بهم الآن":"Les appeler maintenant"}
                     </a>
                   )}
                   <button onClick={()=>{stopWatch();setPanel("list");setSel(null);setRoute(null);setArrived(false);}}
@@ -971,42 +1092,67 @@ export default function EmergencyMap({lang,onBack}:Props){
         </div>
       )}
 
-      {/* Share popup */}
+      {/* ── Share popup ── */}
       {shareOpen&&(
         <div style={{position:"absolute",top:64,insetInlineEnd:10,zIndex:900,background:"#fff",
           borderRadius:16,padding:"16px",boxShadow:"0 8px 32px rgba(0,0,0,.18)",
           minWidth:230,border:"1.5px solid #eaeaea",animation:"em-in .2s ease"}}>
-          <div style={{fontWeight:800,fontSize:13,marginBottom:12}}>📤 {isAr?"مشاركة موقعي":"Partager ma position"}</div>
+          <div style={{fontWeight:800,fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>
+            <Share2 size={15}/> {isAr?"مشاركة موقعي":"Partager ma position"}
+          </div>
           <button onClick={()=>{
             if(!userPos){showToast(isAr?"حدد موقعك أولاً":"Localisez-vous d'abord",false);return;}
             const msg=encodeURIComponent(isAr
-              ?`🆘 موقعي للطوارئ:\nhttps://maps.google.com?q=${userPos[0]},${userPos[1]}`
-              :`🆘 Ma position d'urgence:\nhttps://maps.google.com?q=${userPos[0]},${userPos[1]}`);
+              ?`موقعي للطوارئ:\nhttps://maps.google.com?q=${userPos[0]},${userPos[1]}`
+              :`Ma position d'urgence:\nhttps://maps.google.com?q=${userPos[0]},${userPos[1]}`);
             window.open(`https://wa.me/?text=${msg}`,"_blank");
           }} style={{width:"100%",padding:"10px",background:"#25d366",color:"#fff",border:"none",
-            borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",marginBottom:7}}>
-            💬 WhatsApp
+            borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",marginBottom:7,
+            display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <MessageCircle size={15}/> WhatsApp
           </button>
           <button onClick={()=>{
             if(!userPos){showToast(isAr?"حدد موقعك أولاً":"Localisez-vous d'abord",false);return;}
             navigator.clipboard?.writeText(`https://maps.google.com?q=${userPos[0]},${userPos[1]}`);
-            showToast(isAr?"✅ تم النسخ":"✅ Copié");setShare(false);
+            showToast(isAr?"تم النسخ":"Copié");setShare(false);
           }} style={{width:"100%",padding:"10px",background:"#f0f0f0",color:"#333",
-            border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
-            🔗 {isAr?"نسخ الرابط":"Copier le lien"}
+            border:"none",borderRadius:10,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",
+            display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Link2 size={15}/> {isAr?"نسخ الرابط":"Copier le lien"}
           </button>
           <button onClick={()=>setShare(false)} style={{marginTop:8,width:"100%",padding:"7px",
             background:"transparent",border:"1px solid #e8e8e8",borderRadius:8,color:"#888",
-            cursor:"pointer",fontFamily:"inherit",fontSize:12}}>✕</button>
+            cursor:"pointer",fontFamily:"inherit",fontSize:12,
+            display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+            <X size={13}/> {isAr?"إغلاق":"Fermer"}
+          </button>
         </div>
       )}
 
-      {/* Toast */}
+      {/* ── Pin-mode banner ── */}
+      {pinMode&&(
+        <div style={{position:"absolute",top:66,left:"50%",transform:"translateX(-50%)",zIndex:2100,
+          background:"#1d4ed8",color:"#fff",padding:"12px 22px",borderRadius:18,
+          boxShadow:"0 6px 28px #1d4ed855",display:"flex",alignItems:"center",gap:12,
+          fontFamily:"Cairo,sans-serif",fontWeight:800,fontSize:13.5,whiteSpace:"nowrap"}}>
+          <Crosshair size={18}/>
+          {isAr?"اضغط على خريطتك للموقع الحقيقي":"Cliquez sur la carte pour votre position"}
+          <button onClick={()=>setPinMode(false)} style={{marginRight:isAr?0:undefined,marginLeft:isAr?undefined:0,
+            width:26,height:26,borderRadius:8,border:"none",background:"rgba(255,255,255,.2)",
+            color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <X size={14}/>
+          </button>
+        </div>
+      )}
+
+      {/* ── Toast ── */}
       {toast&&(
         <div style={{position:"absolute",bottom:20,left:"50%",transform:"translateX(-50%)",zIndex:2000,
           background:toast.ok?"#16a34a":"#dc2626",color:"#fff",padding:"11px 20px",borderRadius:14,
           fontWeight:700,fontSize:13,boxShadow:"0 6px 24px rgba(0,0,0,.22)",
-          whiteSpace:"nowrap",animation:"em-in .3s ease",maxWidth:"80vw",textAlign:"center"}}>
+          whiteSpace:"nowrap",animation:"em-in .3s ease",maxWidth:"80vw",textAlign:"center",
+          display:"flex",alignItems:"center",gap:8}}>
+          {toast.ok?<CheckCircle2 size={15}/>:<AlertOctagon size={15}/>}
           {toast.msg}
         </div>
       )}
@@ -1026,16 +1172,23 @@ function PlaceCard({ p, c, d, isSel, isFav, isAr, tmode, onSelect, onFav }:{
         transition:"all .2s",boxShadow:"0 2px 10px rgba(0,0,0,.05)"}}>
       <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:8}}>
         <div style={{width:40,height:40,borderRadius:12,background:c.color,
-          display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,
-          boxShadow:`0 4px 14px ${c.color}44`}}>{c.icon}</div>
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+          color:"#fff",boxShadow:`0 4px 14px ${c.color}44`}}>
+          {TYPE_ICON[p.type]}
+        </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:12,fontWeight:800,color:"#111",
             overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
           {p.address&&<div style={{fontSize:10,color:"#bbb",marginTop:2,
-            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📍{p.address}</div>}
+            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            display:"flex",alignItems:"center",gap:3}}>
+            <MapPin size={9} color="#ccc"/>{p.address}
+          </div>}
           {p.is_24h&&<span style={{fontSize:9,color:"#16a34a",fontWeight:800,
             background:"#f0fdf4",borderRadius:20,padding:"1px 6px",
-            border:"1px solid #bbf7d0",marginTop:3,display:"inline-block"}}>✅ 24/24</span>}
+            border:"1px solid #bbf7d0",marginTop:3,display:"inline-flex",alignItems:"center",gap:3}}>
+            <CheckCircle2 size={8}/> 24/24
+          </span>}
         </div>
         <div style={{textAlign:"center",flexShrink:0}}>
           <div style={{fontSize:13,fontWeight:900,color:c.color}}>{d<1?`${Math.round(d*1000)}م`:`${d.toFixed(1)}كم`}</div>
@@ -1049,33 +1202,34 @@ function PlaceCard({ p, c, d, isSel, isFav, isAr, tmode, onSelect, onFav }:{
           <a href={`tel:${p.phone}`} onClick={e=>e.stopPropagation()}
             style={{flex:1,padding:"6px",background:"#f0fdf4",border:"1px solid #bbf7d0",
               borderRadius:9,color:"#16a34a",fontWeight:800,fontSize:11,
-              textAlign:"center",textDecoration:"none"}}>
-            📞 {isAr?"اتصال":"Appel"}
+              textAlign:"center",textDecoration:"none",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            <Phone size={12}/> {isAr?"اتصال":"Appel"}
           </a>
         )}
         <button className="em-fav-btn" onClick={onFav}
           style={{width:34,padding:"6px",background:isFav?"#fef3c7":"#f9f9f9",
             border:`1.5px solid ${isFav?"#f59e0b":"#e5e7eb"}`,
-            borderRadius:9,cursor:"pointer",fontSize:13,fontFamily:"inherit",
-            transition:"all .15s",flexShrink:0}}>
-          {isFav?"⭐":"☆"}
+            borderRadius:9,cursor:"pointer",fontFamily:"inherit",
+            transition:"all .15s",flexShrink:0,
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Star size={13} fill={isFav?"#f59e0b":"none"} color={isFav?"#f59e0b":"#ccc"}/>
         </button>
         <button onClick={e=>{e.stopPropagation();onSelect();}}
           style={{flex:2,padding:"6px",background:c.color,border:"none",
             borderRadius:9,color:"#fff",fontWeight:800,fontSize:11,
-            cursor:"pointer",fontFamily:"inherit"}}>
-          🧭 {isAr?"المسار":"Itinéraire"}
+            cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+          <Navigation size={12}/> {isAr?"المسار":"Itinéraire"}
         </button>
       </div>
     </div>
   );
 }
 
-function IRow({icon,bg,label,children}:{icon:string;bg:string;label:string;children:React.ReactNode}){
+function IRow({icon,bg,label,children}:{icon:React.ReactNode;bg:string;label:string;children:React.ReactNode}){
   return(
     <div style={{display:"flex",gap:10,padding:"11px",background:bg,borderRadius:13,
       marginBottom:9,border:"1.5px solid #eee",alignItems:"center"}}>
-      <span style={{fontSize:20,flexShrink:0}}>{icon}</span>
+      <span style={{flexShrink:0,color:"#666"}}>{icon}</span>
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:10,color:"#888",fontWeight:700,marginBottom:3}}>{label}</div>
         {children}
@@ -1083,3 +1237,4 @@ function IRow({icon,bg,label,children}:{icon:string;bg:string;label:string;child
     </div>
   );
 }
+

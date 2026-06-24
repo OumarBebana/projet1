@@ -21,6 +21,9 @@ FRENCH_CAPABLE_SLUGS = {
     "commerce-tourisme",
 }
 
+# Sources whose RSS/scrape already contains both languages — skip the second lang pass
+_BILINGUAL_SLUGS = {"ami"}
+
 
 def _detect_language(title: str) -> str:
     """Detect language: Arabic if >30% Arabic chars (all Unicode Arabic blocks)."""
@@ -259,7 +262,8 @@ class Command(BaseCommand):
 
         def _run_source(source, langs_to_try):
             got = 0
-            for fetch_lang in langs_to_try:
+            effective_langs = [""] if source.slug in _BILINGUAL_SLUGS else langs_to_try
+            for fetch_lang in effective_langs:
                 n_new, n_fetched = self._fetch_source(source, limit, verbose, fetch_lang)
                 got += n_new
                 source.last_fetched_at = dj_timezone.now()
@@ -284,12 +288,12 @@ class Command(BaseCommand):
             for fut in concurrent.futures.as_completed(fut_to_source, timeout=180):
                 source = fut_to_source[fut]
                 try:
-                    n = fut.result(timeout=15)
+                    n = fut.result(timeout=60)
                     total_new += n
                 except concurrent.futures.TimeoutError:
                     total_errors += 1
-                    logger.warning("Timeout fetching %s (15s)", source.slug)
-                    self.stdout.write(self.style.ERROR(f"  TIMEOUT {source.slug} (exceeded 15s)"))
+                    logger.warning("Timeout fetching %s (60s)", source.slug)
+                    self.stdout.write(self.style.ERROR(f"  TIMEOUT {source.slug} (exceeded 60s)"))
                     source.last_fetched_at = dj_timezone.now()
                     source.last_fetch_status = "fail"
                     source.last_fetch_error = "Timeout (15s)"
