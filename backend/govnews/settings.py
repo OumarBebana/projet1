@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "127.0.0.1,localhost,bawaba.mr,www.bawaba.mr"
+    "ALLOWED_HOSTS", "127.0.0.1,localhost,bawaba.mr,www.bawaba.mr,projet1-production-f935.up.railway.app,.railway.app"
 ).split(",")
 # Railway injects RAILWAY_PUBLIC_DOMAIN automatically
 _railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
@@ -150,6 +150,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
+    "https://projet1-production-f935.up.railway.app"
 ] + [o.strip() for o in _cors_extra.split(",") if o.strip()]
 # In development allow all origins; in production use the list above
 CORS_ALLOW_ALL_ORIGINS = DEBUG
