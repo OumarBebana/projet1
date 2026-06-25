@@ -150,7 +150,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
-    "https://projet1-production-f935.up.railway.app"
+    "https://projet1-two-mu.vercel.app",
 ] + [o.strip() for o in _cors_extra.split(",") if o.strip()]
 # In development allow all origins; in production use the list above
 CORS_ALLOW_ALL_ORIGINS = DEBUG
