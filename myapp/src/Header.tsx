@@ -32,6 +32,7 @@ export default function Header({
   onMapClick,
   onServicesClick,
 }: Props) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 640;
   const fallback = t.ticker.map((text, i) => ({ id: i, title: text }));
   const tickerItems: TickerItem[] =
     tickerTitles.length > 0 ? tickerTitles : fallback;
@@ -50,10 +51,10 @@ export default function Header({
       <div className="bw-header-inner">
         {/* Logo */}
         <div className="bw-header-logo">
-          <MauritaniaLogo size={46} />
+          <MauritaniaLogo size={isMobile ? 30 : 46} />
           <div className="bw-header-title">
-            <h1>{t.title}</h1>
-            <span>{t.subtitle}</span>
+            <h1>{isMobile ? "BAWABA.MR" : t.title}</h1>
+            {!isMobile && <span>{t.subtitle}</span>}
           </div>
         </div>
 
@@ -74,7 +75,7 @@ export default function Header({
               <path d="M10.3 11.5l1 1 1.8-1.8" stroke="white" strokeWidth="1.1"
                 strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            {lang === "ar" ? "الخدمات" : "Services"}
+            {!isMobile && (lang === "ar" ? "الخدمات" : "Services")}
           </button>
 
           <button
@@ -93,7 +94,7 @@ export default function Header({
             aria-label="Toggle theme"
           >
             <span className="bw-theme-icon">{themeIcon}</span>
-            <span className="bw-theme-text">{themeText}</span>
+            {!isMobile && <span className="bw-theme-text">{themeText}</span>}
           </button>
 
           <button
