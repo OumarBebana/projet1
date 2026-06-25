@@ -1,0 +1,318 @@
+/* ═══════════════════════════════════════════════════════════
+   BAWABA.MR — Comprehensive Responsive Stylesheet
+   Breakpoints: 1200 | 1024 | 900 | 768 | 640 | 480 | 360
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1200px: Wide desktop ─────────────────────────────────── */
+@media (max-width: 1200px) {
+  :root { --max-width: 1100px; }
+  .bw-grid { grid-template-columns: repeat(3, 1fr); }
+  .mc-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── 1100px: Laptop ───────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .bw-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .bw-skeleton-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .mc-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .bw-smart-layout { grid-template-columns: 1fr !important; }
+  .bw-smart-map-col .bw-map-container { height: 500px !important; }
+}
+
+/* ── 1024px: Tablet landscape ────────────────────────────── */
+@media (max-width: 1024px) {
+  .bw-main { padding: 20px 20px 50px; }
+
+  /* Stats */
+  .stats-bar { grid-template-columns: repeat(3, 1fr) !important; }
+  .stat-refresh { grid-column: span 3 !important; }
+
+  /* Newsletter card */
+  .newsletter-card {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px;
+  }
+  .newsletter-visual { display: none; }
+
+  /* Maps */
+  .bw-smart-layout { grid-template-columns: 1fr !important; }
+  .bw-smart-map-col .bw-map-container { height: 480px !important; }
+  .bw-smart-info-col { flex-direction: row; flex-wrap: wrap; }
+  .bw-info-card { flex: 1; min-width: 300px; }
+}
+
+/* ── 900px: Tablet portrait ──────────────────────────────── */
+@media (max-width: 900px) {
+  /* Header */
+  .bw-header-inner { padding: 0 16px; height: 56px; }
+  .bw-header-title span { display: none; }
+
+  /* Newsletter */
+  .newsletter-card {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+  .newsletter-form { flex-direction: column; align-items: center; }
+  .newsletter-form input,
+  .newsletter-form button { width: 100%; max-width: 480px; }
+  .newsletter-content h2 { font-size: 30px; }
+  .newsletter-visual { display: none; }
+
+  /* Featured */
+  .bw-featured-grid { grid-template-columns: 1fr !important; }
+  .bw-featured-main { grid-row: auto; }
+
+  /* Gov stats */
+  .bw-gov-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Smart info col */
+  .bw-smart-info-col { flex-direction: column; }
+  .bw-info-card { min-width: unset; width: 100%; }
+}
+
+/* ── 768px: Tablet small ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .bw-main { padding: 16px 16px 40px; }
+
+  /* Stats */
+  .stats-bar { grid-template-columns: repeat(2, 1fr) !important; }
+  .stat-refresh { grid-column: span 2 !important; }
+  .stat-box h1 { font-size: 32px; }
+  .stat-box { padding: 16px 10px; }
+
+  /* Categories — horizontal scroll */
+  .bw-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    margin-bottom: 16px;
+  }
+  .bw-categories::-webkit-scrollbar { display: none; }
+  .bw-cat-btn { white-space: nowrap; flex-shrink: 0; font-size: 13px; padding: 7px 16px; }
+
+  /* Section title */
+  .bw-section-title { font-size: 16px; margin-bottom: 16px; }
+
+  /* Grid */
+  .bw-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+  .bw-skeleton-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+  .mc-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px; }
+
+  /* Modal */
+  .bw-modal-overlay { align-items: flex-end; padding: 0; }
+  .bw-modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    max-width: 100%;
+  }
+  .bw-modal-header { padding: 18px 18px 12px; }
+  .bw-modal-body { padding: 16px 18px; }
+  .bw-modal-footer { padding: 12px 18px; flex-direction: column; gap: 10px; align-items: stretch; }
+  .bw-modal-external-link { justify-content: center; }
+
+  /* Map */
+  .bw-map-page { padding: 12px; }
+  .bw-map-container { height: 420px !important; }
+  .bw-smart-map-col .bw-map-container { height: 420px !important; }
+  .bw-map-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .bw-map-categories::-webkit-scrollbar { display: none; }
+  .bw-cat-pill { flex-shrink: 0; }
+
+  /* Info actions */
+  .bw-info-actions { flex-wrap: wrap; }
+  .bw-action-btn { min-width: calc(50% - 4px); }
+
+  /* Newsletter section */
+  .bw-newsletter-content { flex-direction: column; text-align: center; padding: 20px 0; }
+  .bw-newsletter-form { flex-direction: column; width: 100%; }
+  .bw-newsletter-input { min-width: unset; width: 100%; }
+
+  /* Gov stats */
+  .bw-gov-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* NF category strip */
+  .nf-cat-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nf-cat-strip::-webkit-scrollbar { display: none; }
+  .nf-cat-pill { flex-shrink: 0; }
+
+  /* Map search */
+  .bw-map-search { flex-direction: column; }
+  .bw-map-search button { width: 100%; }
+}
+
+/* ── 640px: Mobile large ─────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Header */
+  .bw-header-inner { padding: 0 12px; height: 52px; }
+  .bw-header-emblem { width: 36px !important; height: 36px !important; }
+  .bw-header-title h1 { font-size: 15px; }
+  .bw-header-title span { display: none; }
+  .bw-theme-text { display: none; }
+  .bw-theme-btn { width: 32px; padding: 0; justify-content: center; }
+  .bw-lang-btn { padding: 0 10px; font-size: 12px; height: 30px; }
+  .bw-services-btn { padding: 0 10px; font-size: 12px; height: 30px; }
+  .bw-controls { gap: 6px; }
+  .breaking-label { padding: 0 10px; font-size: 11.5px; }
+  .breaking-item { font-size: 12px; }
+
+  /* Main */
+  .bw-main { padding: 12px 12px 36px; }
+
+  /* Stats */
+  .stats-bar { grid-template-columns: repeat(2, 1fr) !important; }
+  .stat-refresh { grid-column: span 2 !important; }
+  .stat-box h1 { font-size: 28px; }
+  .stat-box p { font-size: 11px; }
+
+  /* Grid → 1 col */
+  .bw-grid { grid-template-columns: 1fr !important; gap: 10px; }
+  .bw-skeleton-grid { grid-template-columns: 1fr !important; gap: 10px; }
+  .mc-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .mc-card { min-height: unset; }
+
+  /* Featured */
+  .bw-featured-grid { grid-template-columns: 1fr !important; }
+  .bw-featured-img { height: 160px !important; }
+  .bw-featured-main .bw-featured-img { height: 200px !important; }
+
+  /* Gov stats */
+  .bw-gov-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .bw-gov-stat-value { font-size: 22px; }
+
+  /* Map */
+  .bw-map-container { height: 360px !important; }
+  .bw-smart-map-col .bw-map-container { height: 360px !important; }
+  .bw-info-welcome { padding: 24px 16px; }
+  .bw-welcome-icon { font-size: 36px; }
+
+  /* Newsletter card */
+  .newsletter-card { padding: 24px 18px !important; gap: 20px !important; }
+  .newsletter-content h2 { font-size: 24px; }
+  .newsletter-content p { font-size: 15px; }
+  .newsletter-form input { height: 48px !important; font-size: 15px !important; }
+  .newsletter-form button { height: 48px !important; font-size: 14px !important; }
+  .newsletter-stats { height: 160px !important; }
+  .stats-number { font-size: 40px !important; }
+
+  /* Newsletter smart */
+  .nl-interests-grid { grid-template-columns: 1fr !important; }
+  .nl-modal { padding: 20px 16px; }
+
+  /* Notif tags scroll */
+  .bw-notif-tags {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .bw-notif-tags::-webkit-scrollbar { display: none; }
+  .bw-notif-tag { flex-shrink: 0; }
+
+  /* Footer */
+  .bw-footer { padding: 20px 12px; }
+
+  /* Route modes */
+  .bw-route-modes { grid-template-columns: 1fr 1fr; gap: 6px; }
+}
+
+/* ── 480px: Mobile small ─────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Header — hide services text */
+  .bw-services-btn .bw-btn-label { display: none; }
+  .bw-services-btn { width: 32px; padding: 0; }
+
+  /* Stats — stack */
+  .stats-bar { grid-template-columns: 1fr 1fr !important; }
+  .stat-box h1 { font-size: 24px; }
+
+  /* Map */
+  .bw-map-container { height: 300px !important; }
+  .bw-smart-map-col .bw-map-container { height: 300px !important; }
+  .bw-info-actions { flex-direction: column; }
+  .bw-action-btn { width: 100%; }
+
+  /* Modal */
+  .bw-modal-title { font-size: 15px; }
+  .bw-modal-body { padding: 12px 14px; }
+
+  /* Gov stats → 1 row of 2 */
+  .bw-gov-stats { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+
+  /* Section title */
+  .bw-section-title { font-size: 15px; }
+
+  /* Newsletter */
+  .newsletter-content h2 { font-size: 20px; }
+  .newsletter-label { font-size: 15px; }
+
+  /* Cards */
+  .bw-card-body { padding: 4px 12px 8px; }
+  .bw-card-header { padding: 12px 12px 10px; }
+  .bw-card-footer { padding: 8px 12px; }
+  .mc-header { padding: 14px 14px 12px; }
+  .mc-body { padding: 6px 14px 8px; }
+  .mc-footer { padding: 10px 14px; }
+
+  /* Search */
+  .bw-smart-search-input { font-size: 14px; }
+  .bw-gps-btn { width: 38px; height: 38px; font-size: 17px; }
+  .bw-voice-btn { width: 38px; height: 38px; font-size: 17px; }
+}
+
+/* ── 360px: Very small phones ─────────────────────────────── */
+@media (max-width: 360px) {
+  .bw-header-title { display: none; }
+  .bw-header-inner { justify-content: space-between; }
+
+  .bw-main { padding: 10px 10px 32px; }
+
+  .stats-bar { grid-template-columns: 1fr 1fr !important; }
+  .stat-box { padding: 12px 8px; }
+  .stat-box h1 { font-size: 22px; }
+
+  .bw-grid { gap: 8px; }
+  .mc-grid { gap: 8px; }
+
+  .bw-map-container { height: 260px !important; }
+  .bw-smart-map-col .bw-map-container { height: 260px !important; }
+
+  .breaking-label { font-size: 10.5px; padding: 0 8px; }
+  .breaking-item { font-size: 11.5px; }
+}
+
+/* ── Touch / hover optimization ─────────────────────────────── */
+@media (hover: none) {
+  /* Remove hover transforms on touch devices */
+  .bw-card:hover { transform: none; }
+  .bw-featured-card:hover { transform: none; }
+  .mc-card:hover { transform: none; }
+  .bw-refresh-btn:hover:not(:disabled) { transform: none; }
+  .bw-nearest-btn:hover { transform: none; }
+  .bw-fetch-content-btn:hover { transform: none; }
+
+  /* Make tap targets bigger */
+  .bw-cat-btn { padding: 9px 18px; }
+  .bw-cat-pill { padding: 9px 18px; }
+  .nf-cat-pill { padding: 9px 18px; }
+  .bw-action-btn { padding: 13px 14px; }
+}
+
+/* ── Safe area (iPhone notch) ────────────────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bw-footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .bw-header { padding-top: env(safe-area-inset-top); }
+}

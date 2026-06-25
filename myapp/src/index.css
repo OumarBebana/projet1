@@ -1,6 +1,7 @@
 
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import './responsive.css';
 
 /* ─── CSS Variables ─────────────────────────────────────────── */
 :root {
@@ -278,80 +279,3 @@ img {
 ::-webkit-scrollbar-track { background: var(--border-light); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-full); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* ─── Global Mobile Responsive ──────────────────────────────── */
-@media (max-width: 640px) {
-  .bw-main {
-    padding: 12px 12px 40px;
-  }
-
-  /* stats bar: 2 cols on mobile */
-  .stats-bar {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-  .stat-refresh {
-    grid-column: span 2 !important;
-  }
-  .stat-box h1 {
-    font-size: 28px;
-  }
-
-  /* categories scroll horizontal */
-  .bw-categories {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .bw-categories::-webkit-scrollbar { display: none; }
-  .bw-cat-btn { white-space: nowrap; flex-shrink: 0; }
-
-  /* news grid: 1 col */
-  .bw-grid { grid-template-columns: 1fr !important; gap: 12px; }
-  .bw-skeleton-grid { grid-template-columns: 1fr !important; gap: 12px; }
-
-  /* featured grid: 1 col */
-  .bw-featured-grid { grid-template-columns: 1fr !important; }
-  .bw-featured-main { grid-row: auto; }
-
-  /* modal full screen */
-  .bw-modal {
-    max-height: 96vh;
-    border-radius: 16px 16px 0 0;
-    margin-top: auto;
-  }
-  .bw-modal-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  /* map layout: 1 col */
-  .bw-smart-layout { grid-template-columns: 1fr !important; }
-  .bw-smart-map-col .bw-map-container { height: 380px !important; }
-  .bw-map-page { padding: 12px; }
-
-  /* gov stats: 2 cols */
-  .bw-gov-stats { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* newsletter form: stack */
-  .bw-newsletter-form { flex-direction: column; width: 100%; }
-  .bw-newsletter-input { min-width: unset; width: 100%; }
-  .bw-newsletter-content { padding: 20px 0; }
-}
-
-@media (max-width: 768px) {
-  /* map categories scroll */
-  .bw-map-categories {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 4px;
-  }
-  .bw-map-categories::-webkit-scrollbar { display: none; }
-  .bw-cat-pill { flex-shrink: 0; }
-
-  /* info card actions stack */
-  .bw-info-actions { flex-direction: column; }
-}
