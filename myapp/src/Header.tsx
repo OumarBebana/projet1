@@ -53,7 +53,7 @@ export default function Header({
         <div className="bw-header-logo">
           <MauritaniaLogo size={isMobile ? 30 : 46} />
           <div className="bw-header-title">
-            <h1>{isMobile ? "BAWABA.MR" : t.title}</h1>
+            <h1>{t.title}</h1>
             {!isMobile && <span>{t.subtitle}</span>}
           </div>
         </div>

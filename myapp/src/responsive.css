@@ -160,7 +160,7 @@
   .bw-header-inner { padding: 0 10px; height: 50px; gap: 6px; }
   .bw-header-logo { gap: 6px; min-width: 0; flex-shrink: 1; overflow: hidden; }
   .bw-header-emblem { width: 32px !important; height: 32px !important; flex-shrink: 0; }
-  .bw-header-title h1 { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bw-header-title h1 { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
   .bw-header-title span { display: none; }
   .bw-theme-text { display: none; }
   .bw-theme-btn { width: 30px; height: 30px; padding: 0; justify-content: center; }
