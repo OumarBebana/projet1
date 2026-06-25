@@ -157,15 +157,17 @@
 /* ── 640px: Mobile large ─────────────────────────────────── */
 @media (max-width: 640px) {
   /* Header */
-  .bw-header-inner { padding: 0 12px; height: 52px; }
-  .bw-header-emblem { width: 36px !important; height: 36px !important; }
-  .bw-header-title h1 { font-size: 15px; }
+  .bw-header-inner { padding: 0 10px; height: 50px; gap: 6px; }
+  .bw-header-logo { gap: 6px; min-width: 0; flex-shrink: 1; overflow: hidden; }
+  .bw-header-emblem { width: 32px !important; height: 32px !important; flex-shrink: 0; }
+  .bw-header-title h1 { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bw-header-title span { display: none; }
   .bw-theme-text { display: none; }
-  .bw-theme-btn { width: 32px; padding: 0; justify-content: center; }
-  .bw-lang-btn { padding: 0 10px; font-size: 12px; height: 30px; }
-  .bw-services-btn { padding: 0 10px; font-size: 12px; height: 30px; }
-  .bw-controls { gap: 6px; }
+  .bw-theme-btn { width: 30px; height: 30px; padding: 0; justify-content: center; }
+  .bw-lang-btn { padding: 0 8px; font-size: 11.5px; height: 30px; min-width: 32px; }
+  .bw-services-btn { padding: 0 8px; font-size: 11.5px; height: 30px; }
+  .bw-map-btn { width: 30px; height: 30px; font-size: 14px; }
+  .bw-controls { gap: 5px; flex-shrink: 0; }
   .breaking-label { padding: 0 10px; font-size: 11.5px; }
   .breaking-item { font-size: 12px; }
 
