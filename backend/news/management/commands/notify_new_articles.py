@@ -20,7 +20,7 @@ from news.models import Article, Subscriber
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://bawaba.mr"
+BASE_URL = "https://projet1-two-mu.vercel.app"
 TRACKER_FILE = Path(__file__).resolve().parent.parent.parent.parent / "data" / "last_notify.json"
 
 
@@ -85,7 +85,7 @@ def _build_html(article, lang, email):
               <div style="font-size:12px;color:#888;margin-bottom:6px">{src} · {article.published_at.strftime('%Y-%m-%d') if article.published_at else ''}</div>
               <div style="font-size:16px;font-weight:600;color:#1a1a2e;line-height:1.5;margin-bottom:14px">{article.title}</div>
               {f'<p style="font-size:13px;color:#555;line-height:1.6;margin:0 0 14px">{article.summary[:250]}</p>' if article.summary else ''}
-              <a href="{article.url}" style="display:inline-block;background:#0c7c3e;color:#fff;text-decoration:none;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:600">{read_more}</a>
+              <a href="{BASE_URL}" style="display:inline-block;background:#0c7c3e;color:#fff;text-decoration:none;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:600">{read_more}</a>
             </td>
           </tr>
         </table>
