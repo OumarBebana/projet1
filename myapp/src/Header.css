@@ -400,3 +400,65 @@
   color: #fff;
 }
 
+/* ─── Mobile Responsive ──────────────────────────────────── */
+@media (max-width: 640px) {
+  .bw-header-inner {
+    padding: 0 12px;
+    height: 52px;
+  }
+
+  /* shrink logo */
+  .bw-header-emblem {
+    width: 34px;
+    height: 34px;
+  }
+  .bw-header-title h1 {
+    font-size: 14px;
+  }
+  .bw-header-title span {
+    display: none;
+  }
+
+  /* hide theme text, keep icon only */
+  .bw-theme-text {
+    display: none;
+  }
+  .bw-theme-btn {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  /* shrink buttons */
+  .bw-lang-btn,
+  .bw-services-btn {
+    padding: 0 10px;
+    font-size: 11.5px;
+    height: 30px;
+  }
+
+  .bw-controls {
+    gap: 6px;
+  }
+
+  /* ticker label shorter */
+  .breaking-label {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .breaking-item {
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 400px) {
+  /* hide subtitle text in services button */
+  .bw-services-btn span:not(svg) {
+    display: none;
+  }
+  .bw-services-btn {
+    width: 32px;
+    padding: 0;
+  }
+}
+
