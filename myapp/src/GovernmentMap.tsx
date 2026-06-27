@@ -198,6 +198,12 @@ export default function GovernmentMap({ lang, onBack }: Props) {
   const [mapStyle, setMapStyle]     = useState<"street"|"satellite">("street");
   const [flyTarget, setFlyTarget]   = useState<{pos:[number,number];zoom:number}|null>(null);
   const [panel, setPanel]           = useState<Panel>("search");
+  const [isMobile, setIsMobile]     = useState(typeof window !== "undefined" && window.innerWidth <= 640);
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<=640);
+    window.addEventListener("resize",onResize);
+    return ()=>window.removeEventListener("resize",onResize);
+  },[]);
   const [aiQuery, setAiQuery]       = useState("");
   const [aiAnswer, setAiAnswer]     = useState("");
   const [aiLoading, setAiLoading]   = useState(false);
@@ -516,7 +522,7 @@ export default function GovernmentMap({ lang, onBack }: Props) {
 
   /* ════════════════════ RENDER ════════════════════════════════════ */
   return (
-    <div style={{ position:"relative", width:"100%", height:"calc(100vh - 70px)", minHeight:560, fontFamily:"Cairo,Tajawal,sans-serif", direction:dir, overflow:"hidden" }}>
+    <div style={{ position:"relative", width:"100%", height:isMobile?"100dvh":"calc(100vh - 70px)", minHeight:isMobile?500:560, fontFamily:"Cairo,Tajawal,sans-serif", direction:dir, overflow:"hidden" }}>
       <style>{`
         .gm-step-active { background:var(--green,#0d6b3c)!important; color:#fff!important; }
         .gm-list-item:hover { background:#f0fdf4!important; }
@@ -681,7 +687,13 @@ export default function GovernmentMap({ lang, onBack }: Props) {
       </div>
 
       {/* ═══ LEFT SIDEBAR — Search + List ═══ */}
-      <div style={{
+      <div style={isMobile ? {
+        position:"absolute", bottom:0, left:0, right:0, height:"52%", zIndex:400,
+        background:"#fff", borderTop:"2px solid #e8eaed",
+        display:"flex", flexDirection:"column",
+        boxShadow:"0 -4px 20px rgba(0,0,0,.1)",
+        borderRadius:"16px 16px 0 0",
+      } : {
         position:"absolute", top:56, left:0, bottom:0, width:306, zIndex:400,
         background:"#fff", borderRight:"1.5px solid #e8eaed",
         display:"flex", flexDirection:"column",
@@ -834,7 +846,14 @@ export default function GovernmentMap({ lang, onBack }: Props) {
 
       {/* ═══ RIGHT PANEL — Detail / Nav (slides in over map) ═══ */}
       {(panel==="detail"||panel==="nav") && selected && (
-        <div style={{
+        <div style={isMobile ? {
+          position:"absolute", bottom:0, left:0, right:0, height:"70%", zIndex:500,
+          background:"#fff", boxShadow:"0 -4px 24px rgba(0,0,0,.15)",
+          display:"flex", flexDirection:"column",
+          borderRadius:"16px 16px 0 0",
+          animation:"gm-slidein .22s ease",
+          overflowY:"auto",
+        } : {
           position:"absolute", top:56, right:0, bottom:0, width:340, zIndex:400,
           background:"#fff", boxShadow:"-4px 0 24px rgba(0,0,0,.1)",
           display:"flex", flexDirection:"column",
