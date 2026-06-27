@@ -18,7 +18,7 @@ from news.models import Article, Subscriber
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://bawaba.mr"
+BASE_URL = "https://projet1-two-mu.vercel.app"
 
 CATEGORY_ICONS = {
     "government":     "🏛",

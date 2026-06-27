@@ -19,7 +19,7 @@ from news.models import Article, Source, Subscriber
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://bawaba.mr"
+BASE_URL = "https://projet1-two-mu.vercel.app"
 
 
 def _unsubscribe_token(email: str) -> str:
