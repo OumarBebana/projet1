@@ -299,7 +299,13 @@ export default function EmergencyMap({lang,onBack}:Props){
   const getGPS=():Promise<[number,number]>=>new Promise((res,rej)=>{
     if(!navigator.geolocation){rej(new Error("NO_GEOLOCATION"));return;}
     navigator.geolocation.getCurrentPosition(
-      p=>{ setUserPos([p.coords.latitude,p.coords.longitude]); setAccuracy(p.coords.accuracy); res([p.coords.latitude,p.coords.longitude]); },
+      p=>{
+        const acc=p.coords.accuracy;
+        setUserPos([p.coords.latitude,p.coords.longitude]);
+        setAccuracy(acc);
+        if(acc>1000) showToast(isAr?`⚠️ دقة ضعيفة جداً ±${Math.round(acc/1000)} كم — استخدم هاتفك مع GPS لنتائج أدق`:`⚠️ Précision très faible ±${Math.round(acc/1000)} km — utilisez un téléphone avec GPS`,false,5000);
+        res([p.coords.latitude,p.coords.longitude]);
+      },
       rej,
       {enableHighAccuracy:true,timeout:15000,maximumAge:0}
     );

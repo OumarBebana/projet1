@@ -280,10 +280,10 @@ export default function GovernmentMap({ lang, onBack }: Props) {
       // Read current accuracy from state is async; use ref approach via callback
       setAccuracy(acc => {
         const msg = acc < 50
-          ? (isAr?`تم تحديد موقعك — دقة ±${Math.round(acc)} م`:`Localisé — précision ±${Math.round(acc)} m`)
-          : acc < 200
-          ? (isAr?`موقعك تقريبي — دقة ±${Math.round(acc)} م`:`Position approx. — ±${Math.round(acc)} m`)
-          : (isAr?`دقة ضعيفة ±${Math.round(acc)} م — تأكد من تفعيل GPS`:`Faible précision ±${Math.round(acc)} m — activez le GPS`);
+          ? (isAr?`✅ تم تحديد موقعك بدقة ±${Math.round(acc)} م`:`✅ Localisé — précision ±${Math.round(acc)} m`)
+          : acc < 500
+          ? (isAr?`⚠️ موقعك تقريبي — دقة ±${Math.round(acc)} م`:`⚠️ Position approx. — ±${Math.round(acc)} m`)
+          : (isAr?`❌ دقة ضعيفة جداً ±${Math.round(acc/1000)} كم — استخدم هاتفك مع GPS`:`❌ Très faible précision ±${Math.round(acc/1000)} km — utilisez un téléphone GPS`);
         const type = acc < 200 ? "success" : "error";
         setTimeout(() => showToast(msg, type, 5000), 0);
         return acc;
