@@ -415,7 +415,7 @@ export default function EmergencyMap({lang,onBack}:Props){
       try{pos=await getGPS();setUserPos(pos);setFlyTo({pos,zoom:14});}
       catch(err:unknown){
         const code=(err as GeolocationPositionError)?.code;
-        const msg=code===1?(isAr?"❌ رفض إذن الموقع — اضغط 🔒 وافعّل الموقع":"❌ Permission refusée — cliquez 🔒"):code===2?(isAr?"❌ GPS غير متاح":"❌ GPS indisponible"):code===3?(isAr?"⏱️ انتهت المهلة، جرب مجدداً":"⏱️ Délai dépassé"):(isAr?"❌ المتصفح لا يدعم GPS":"❌ GPS non supporté");
+        const msg=code===1?(isAr?"🔒 تم رفض إذن الموقع — اضغط 🔒 بجوار عنوان الموقع واختر «السماح» ثم أعد المحاولة":"🔒 Permission refusée — cliquez 🔒 dans la barre d'adresse et choisissez «Autoriser»"):code===2?(isAr?"❌ GPS غير متاح — فعّل الموقع في إعدادات هاتفك":"❌ GPS indisponible — activez la localisation"):code===3?(isAr?"⏱️ انتهت المهلة — اذهب لمكان مكشوف وأعد المحاولة":"⏱️ Délai dépassé — allez à l'extérieur"):(isAr?"❌ المتصفح لا يدعم GPS — جرب Chrome":"❌ GPS non supporté — essayez Chrome");
         showToast(msg,false);setLoc(false);return;
       }
       setLoc(false);

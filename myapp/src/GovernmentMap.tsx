@@ -299,13 +299,15 @@ export default function GovernmentMap({ lang, onBack }: Props) {
     } catch (err: unknown) {
       const code = (err as GeolocationPositionError)?.code;
       const msg = code === 1
-        ? (isAr ? "❌ تم رفض إذن الموقع — اضغط 🔒 في المتصفح وافعّل الموقع" : "❌ Permission refusée — cliquez 🔒 et autorisez la localisation")
+        ? (isAr
+            ? "🔒 تم رفض إذن الموقع — اضغط على 🔒 بجوار عنوان الموقع ثم اختر «السماح» وأعد المحاولة. يمكنك البحث يدوياً عن المؤسسات من القائمة"
+            : "🔒 Permission refusée — cliquez sur 🔒 dans la barre d'adresse, choisissez «Autoriser» puis réessayez. Vous pouvez aussi chercher manuellement")
         : code === 2
-        ? (isAr ? "❌ الموقع غير متاح — تأكد من تفعيل GPS" : "❌ Position indisponible — activez le GPS")
+        ? (isAr ? "❌ GPS غير متاح — تأكد من تفعيل الموقع في إعدادات هاتفك" : "❌ GPS indisponible — activez la localisation dans les paramètres")
         : code === 3
-        ? (isAr ? "⏱️ انتهت المهلة — جرب مرة أخرى في مكان مكشوف" : "⏱️ Délai dépassé — réessayez en extérieur")
-        : (isAr ? "❌ المتصفح لا يدعم تحديد الموقع" : "❌ Géolocalisation non supportée");
-      showToast(msg, "error", 6000);
+        ? (isAr ? "⏱️ انتهت المهلة — اذهب إلى مكان مكشوف وأعد المحاولة" : "⏱️ Délai dépassé — allez à l'extérieur et réessayez")
+        : (isAr ? "❌ المتصفح لا يدعم GPS — جرب Chrome أو Safari" : "❌ GPS non supporté — essayez Chrome ou Safari");
+      showToast(msg, "error", 8000);
     }
     setLocating(false);
   };
