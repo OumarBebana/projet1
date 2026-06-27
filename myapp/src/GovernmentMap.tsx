@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { API_BASE } from "./config";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, Polyline, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -229,7 +230,7 @@ export default function GovernmentMap({ lang, onBack }: Props) {
 
   /* ── Load locations ── */
   useEffect(()=>{
-    fetch("/api/maps/government-locations/")
+    fetch(`${API_BASE}/maps/government-locations/`)
       .then(r=>r.json())
       .then(d=>{ if(Array.isArray(d)) setLocs(d); else if(Array.isArray(d?.results)) setLocs(d.results); })
       .catch(()=>{});
@@ -406,7 +407,7 @@ export default function GovernmentMap({ lang, onBack }: Props) {
       }
     }
     setNewsLoading(true);
-    fetch(`/api/articles/?source=${loc.slug}&per_source=4`)
+    fetch(`${API_BASE}/articles/?source=${loc.slug}&per_source=4`)
       .then(r=>r.json())
       .then(d=>setNews((d.results||d||[]).slice(0,4)))
       .catch(()=>setNews([]))
