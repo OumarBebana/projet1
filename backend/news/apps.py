@@ -11,7 +11,7 @@ class NewsConfig(AppConfig):
         import threading
         from django.conf import settings
 
-        if settings.DEBUG and not os.environ.get("DJANGO_NO_SCHEDULER"):
+        if not os.environ.get("DJANGO_NO_SCHEDULER"):
             from .scheduler import start_scheduler, stop_scheduler
             start_scheduler()
             atexit.register(stop_scheduler)
