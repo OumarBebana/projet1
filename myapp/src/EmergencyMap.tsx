@@ -296,13 +296,14 @@ export default function EmergencyMap({lang,onBack}:Props){
   },[voiceOn,isAr]);
 
   const [accuracy, setAccuracy] = useState(0);
-  const getGPS=():Promise<[number,number]>=>new Promise((res,rej)=>
+  const getGPS=():Promise<[number,number]>=>new Promise((res,rej)=>{
+    if(!navigator.geolocation){rej(new Error("NO_GEOLOCATION"));return;}
     navigator.geolocation.getCurrentPosition(
       p=>{ setUserPos([p.coords.latitude,p.coords.longitude]); setAccuracy(p.coords.accuracy); res([p.coords.latitude,p.coords.longitude]); },
       rej,
       {enableHighAccuracy:true,timeout:15000,maximumAge:0}
-    )
-  );
+    );
+  });
 
   const startWatch=useCallback(()=>{
     if(watchRef.current!==null)return;
@@ -412,7 +413,11 @@ export default function EmergencyMap({lang,onBack}:Props){
     if(!pos){
       setLoc(true);
       try{pos=await getGPS();setUserPos(pos);setFlyTo({pos,zoom:14});}
-      catch{showToast(isAr?"فعّل خدمة الموقع في المتصفح":"Activez la géolocalisation",false);setLoc(false);return;}
+      catch(err:unknown){
+        const code=(err as GeolocationPositionError)?.code;
+        const msg=code===1?(isAr?"❌ رفض إذن الموقع — اضغط 🔒 وافعّل الموقع":"❌ Permission refusée — cliquez 🔒"):code===2?(isAr?"❌ GPS غير متاح":"❌ GPS indisponible"):code===3?(isAr?"⏱️ انتهت المهلة، جرب مجدداً":"⏱️ Délai dépassé"):(isAr?"❌ المتصفح لا يدعم GPS":"❌ GPS non supporté");
+        showToast(msg,false);setLoc(false);return;
+      }
       setLoc(false);
     }
     showToast(isAr?`يبحث في نطاق ${searchRadius} كم...`:`Recherche dans ${searchRadius} km...`);

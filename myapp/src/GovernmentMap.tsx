@@ -260,11 +260,14 @@ export default function GovernmentMap({ lang, onBack }: Props) {
 
   /* ── GPS ── */
   const getPos = useCallback((): Promise<[number,number]> =>
-    new Promise((res, rej) => navigator.geolocation.getCurrentPosition(
-      p => { const pos:[number,number]=[p.coords.latitude,p.coords.longitude]; setUserPos(pos); setAccuracy(p.coords.accuracy); res(pos); },
-      rej,
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    )),
+    new Promise((res, rej) => {
+      if (!navigator.geolocation) { rej(new Error("NO_GEOLOCATION")); return; }
+      navigator.geolocation.getCurrentPosition(
+        p => { const pos:[number,number]=[p.coords.latitude,p.coords.longitude]; setUserPos(pos); setAccuracy(p.coords.accuracy); res(pos); },
+        rej,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }),
   []);
 
   const locateMe = async () => {
@@ -292,8 +295,16 @@ export default function GovernmentMap({ lang, onBack }: Props) {
         if (r) { setRoute(r); showToast(isAr?"المسار جاهز":"Trajet prêt","success",2000); }
         else    showToast(isAr?"تعذّر حساب المسار، جرّب Google Maps":"Trajet non disponible","error",4000);
       }
-    } catch {
-      showToast(isAr?"فعّل إذن الموقع في إعدادات المتصفح":"Autorisez la géolocalisation dans les paramètres","error",5000);
+    } catch (err: unknown) {
+      const code = (err as GeolocationPositionError)?.code;
+      const msg = code === 1
+        ? (isAr ? "❌ تم رفض إذن الموقع — اضغط 🔒 في المتصفح وافعّل الموقع" : "❌ Permission refusée — cliquez 🔒 et autorisez la localisation")
+        : code === 2
+        ? (isAr ? "❌ الموقع غير متاح — تأكد من تفعيل GPS" : "❌ Position indisponible — activez le GPS")
+        : code === 3
+        ? (isAr ? "⏱️ انتهت المهلة — جرب مرة أخرى في مكان مكشوف" : "⏱️ Délai dépassé — réessayez en extérieur")
+        : (isAr ? "❌ المتصفح لا يدعم تحديد الموقع" : "❌ Géolocalisation non supportée");
+      showToast(msg, "error", 6000);
     }
     setLocating(false);
   };
