@@ -179,6 +179,7 @@ class BreakingNewsView(APIView):
         n = max(5, min(n, 30))
 
         data = []
+        live: list = []
 
         # Priority 1: cached live scrape — Arabic only (gov sites are Arabic)
         if lang != "fr":
