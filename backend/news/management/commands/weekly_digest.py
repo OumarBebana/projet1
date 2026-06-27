@@ -119,7 +119,7 @@ def _build_html(stats, articles, lang, email):
     {cards}
     <tr>
       <td style="padding:20px;text-align:center;font-size:11px;color:#999;border-top:1px solid #e0e0e0">
-        BAWABA.MR · {footer}<br>
+        <a href="{BASE_URL}" style="color:#0c7c3e;text-decoration:none;font-weight:700">BAWABA.MR</a> · {footer}<br>
         <a href="{unsubscribe_url}" style="color:#c0392b;text-decoration:underline;font-size:12px">{unsub}</a>
       </td>
     </tr>

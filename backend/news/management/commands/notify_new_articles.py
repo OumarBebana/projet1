@@ -93,7 +93,7 @@ def _build_html(article, lang, email):
     </tr>
     <tr>
       <td style="padding:20px;text-align:center;font-size:11px;color:#999">
-        BAWABA.MR · {footer}<br>
+        <a href="{BASE_URL}" style="color:#0c7c3e;text-decoration:none;font-weight:700">BAWABA.MR</a> · {footer}<br>
         <a href="{unsubscribe_url}" style="color:#c0392b;text-decoration:underline">{unsub}</a>
       </td>
     </tr>
